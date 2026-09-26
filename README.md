@@ -1,5 +1,9 @@
 # HTML 簡報生成器
 
+> **3.0 版的格式語法與舊版不相容。** 舊語法（如 `<size<5>><b>`、`[width<400px>]`）
+> 的簡報請用 `tools/migrate_syntax.py` 轉換，見「舊簡報如何用 migrate_syntax.py 轉換」。
+> 舊版程式保留在 tag [`v2-legacy-syntax`](https://github.com/mintchocolate123/Markdown-Brief-Generator/tree/v2-legacy-syntax)。
+
 一個支援 Markdown 格式的網頁簡報生成工具，具有語法高亮、表格、樹狀圖等進階功能。
 
 ## 專案結構
