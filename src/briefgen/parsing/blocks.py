@@ -8,7 +8,11 @@ blocks.py - Markdown 區塊解析器
 import re
 from typing import Dict, List, Tuple, Any, Optional
 
-from briefgen.tags import parse_cell_format
+from briefgen.tags import parse_format, split_token, split_top_level
+
+
+WIDTH_RE = re.compile(r'\[width=([^\]]+)\]')
+TREE_NODE_NAMES = {'id', 'p'}
 
 
 class MarkdownParser:
@@ -30,6 +34,7 @@ class MarkdownParser:
     
     def __init__(self):
         self.blocks = []
+        self.warnings = []  # (行索引, 訊息)
     
     def normalize_lang(self, lang: str) -> str:
         """標準化語言名稱"""
@@ -40,56 +45,80 @@ class MarkdownParser:
         """檢查是否支援該語言的語法高亮"""
         return self.normalize_lang(lang) in self.SUPPORTED_LANGS
     
-    def parse(self, content: str) -> Tuple[str, List[Dict[str, Any]]]:
+    def parse(self, content: str) -> Tuple[str, List[Dict[str, Any]], List[int]]:
         """
         解析 Markdown 內容，提取特殊區塊
         
         返回:
             - 處理後的文本（特殊區塊用佔位符取代）
             - 區塊列表
+            - 處理後每一行對應的原始行索引
         """
         self.blocks = []
+        self.warnings = []
         lines = content.split('\n')
         result = []
+        line_map = []
         
         i = 0
         while i < len(lines):
             line = lines[i]
+            stripped = line.strip()
             
-            # 檢查是否為程式碼區塊（Markdown 標準格式）
-            if line.strip().startswith('```'):
+            block = None
+            # 程式碼區塊（Markdown 標準格式）、表格區塊、樹狀圖區塊
+            if stripped.startswith('```'):
                 block, end_index = self._parse_code_block(lines, i)
-                if block:
-                    key = f"code_{len(self.blocks)}"
-                    self.blocks.append({**block, 'key': key})
-                    result.append(f'[BLOCK_REF:{key}]')
-                    i = end_index + 1
-                    continue
-            
-            # 檢查是否為表格區塊
-            if line.strip() == '[table]':
+            elif stripped == '[table]':
                 block, end_index = self._parse_table_block(lines, i)
-                if block:
-                    key = f"table_{len(self.blocks)}"
-                    self.blocks.append({**block, 'key': key})
-                    result.append(f'[BLOCK_REF:{key}]')
-                    i = end_index + 1
-                    continue
-            
-            # 檢查是否為樹狀圖區塊
-            if line.strip() == '[tree]':
+            elif stripped == '[tree]':
                 block, end_index = self._parse_tree_block(lines, i)
-                if block:
-                    key = f"tree_{len(self.blocks)}"
-                    self.blocks.append({**block, 'key': key})
-                    result.append(f'[BLOCK_REF:{key}]')
-                    i = end_index + 1
-                    continue
+            
+            if block:
+                key = f"{block['type']}_{len(self.blocks)}"
+                self.blocks.append({**block, 'key': key})
+                result.append(f'[BLOCK_REF:{key}]')
+                line_map.append(i)
+                i = end_index + 1
+                continue
             
             result.append(line)
+            line_map.append(i)
             i += 1
         
-        return '\n'.join(result), self.blocks
+        return '\n'.join(result), self.blocks, line_map
+    
+    def _parse_width(self, line: str) -> Optional[str]:
+        """解析 [width=...] 設定行"""
+        width_match = WIDTH_RE.match(line.strip())
+        if not width_match:
+            return None
+        return split_token('width=' + width_match.group(1))[1]
+    
+    def _collect_block(self, lines: List[str], start: int, closer: str) -> Tuple[Optional[List[Tuple[int, str]]], Optional[str], int]:
+        """收集區塊內的資料行（含原始行索引）與寬度設定，找不到結束標記時回傳 None"""
+        data_lines = []
+        width = None
+        
+        i = start + 1
+        while i < len(lines):
+            line = lines[i]
+            
+            # 檢查結束標記
+            if line.strip() == closer:
+                return data_lines, width, i
+            
+            # 檢查寬度設定
+            line_width = self._parse_width(line)
+            if line_width is not None:
+                width = line_width
+                i += 1
+                continue
+            
+            data_lines.append((i, line))
+            i += 1
+        
+        return None, None, start
     
     def _parse_code_block(self, lines: List[str], start: int) -> Tuple[Optional[Dict], int]:
         """解析程式碼區塊"""
@@ -99,176 +128,105 @@ class MarkdownParser:
         lang_match = re.match(r'```(\w+)?', first_line)
         lang = lang_match.group(1) if lang_match and lang_match.group(1) else 'text'
         
-        code_lines = []
-        width = None
+        data_lines, width, end = self._collect_block(lines, start, '```')
+        if data_lines is None:
+            return None, start
         
-        i = start + 1
-        while i < len(lines):
-            line = lines[i]
-            
-            # 檢查結束標記
-            if line.strip() == '```':
-                return {
-                    'type': 'code',
-                    'lang': self.normalize_lang(lang),
-                    'code': '\n'.join(code_lines),
-                    'width': width,
-                }, i
-            
-            # 檢查寬度設定
-            width_match = re.match(r'\[width<([^>]+)>\]', line.strip())
-            if width_match:
-                width = width_match.group(1)
-                i += 1
-                continue
-            
-            code_lines.append(line)
-            i += 1
-        
-        return None, start
+        return {
+            'type': 'code',
+            'lang': self.normalize_lang(lang),
+            'code': '\n'.join(line for _, line in data_lines),
+            'width': width,
+        }, end
     
     def _parse_table_block(self, lines: List[str], start: int) -> Tuple[Optional[Dict], int]:
         """解析表格區塊"""
-        data_lines = []
-        width = None
+        data_lines, width, end = self._collect_block(lines, start, '[/table]')
+        if data_lines is None:
+            return None, start
         
-        i = start + 1
-        while i < len(lines):
-            line = lines[i]
-            
-            # 檢查結束標記
-            if line.strip() == '[/table]':
-                rows = self._parse_table_data(data_lines)
-                return {
-                    'type': 'table',
-                    'data': rows,
-                    'width': width,
-                }, i
-            
-            # 檢查寬度設定
-            width_match = re.match(r'\[width<([^>]+)>\]', line.strip())
-            if width_match:
-                width = width_match.group(1)
-                i += 1
-                continue
-            
-            data_lines.append(line)
-            i += 1
-        
-        return None, start
+        rows, cell_lines = self._parse_table_data(data_lines)
+        return {
+            'type': 'table',
+            'data': rows,
+            'cell_lines': cell_lines,
+            'width': width,
+        }, end
     
-    def _parse_table_data(self, lines: List[str]) -> List[List[str]]:
-        """解析表格資料"""
+    def _parse_table_data(self, lines: List[Tuple[int, str]]) -> Tuple[List[List[str]], List[List[int]]]:
+        """解析表格資料，另回傳每個儲存格的原始行索引"""
         rows = []
+        cell_lines = []
         current_cells = []
+        current_lines = []
         
-        for line in lines:
+        for index, line in lines:
             stripped = line.strip()
             if not stripped:
                 continue
             
             # 新儲存格標記
-            if stripped == '[c]':
-                current_cells.append('')
-            elif stripped.startswith('[c]'):
+            if stripped.startswith('[c]'):
                 current_cells.append(stripped[3:])
+                current_lines.append(index)
             else:
                 # 新一行
                 if current_cells:
                     rows.append(current_cells)
+                    cell_lines.append(current_lines)
                 current_cells = [stripped]
+                current_lines = [index]
         
         if current_cells:
             rows.append(current_cells)
+            cell_lines.append(current_lines)
         
-        return rows
+        return rows, cell_lines
     
     def _parse_tree_block(self, lines: List[str], start: int) -> Tuple[Optional[Dict], int]:
         """解析樹狀圖區塊"""
-        data_lines = []
-        width = None
+        data_lines, width, end = self._collect_block(lines, start, '[/tree]')
+        if data_lines is None:
+            return None, start
         
-        i = start + 1
-        while i < len(lines):
-            line = lines[i]
-            
-            # 檢查結束標記
-            if line.strip() == '[/tree]':
-                nodes = self._parse_tree_data(data_lines)
-                return {
-                    'type': 'tree',
-                    'data': nodes,
-                    'width': width,
-                }, i
-            
-            # 檢查寬度設定
-            width_match = re.match(r'\[width<([^>]+)>\]', line.strip())
-            if width_match:
-                width = width_match.group(1)
-                i += 1
-                continue
-            
-            data_lines.append(line)
-            i += 1
-        
-        return None, start
+        return {
+            'type': 'tree',
+            'data': self._parse_tree_data(data_lines),
+            'width': width,
+        }, end
     
-    def _parse_tree_data(self, lines: List[str]) -> List[Dict[str, Any]]:
-        """解析樹狀圖資料"""
+    def _parse_tree_data(self, lines: List[Tuple[int, str]]) -> List[Dict[str, Any]]:
+        """解析樹狀圖資料：[id=X p=Y] 文字"""
         nodes = []
         
-        for line in lines:
+        for index, line in lines:
             stripped = line.strip()
-            if not stripped or not stripped.startswith('['):
+            if not stripped.startswith('['):
+                continue
+            
+            end = stripped.find(']')
+            if end == -1:
                 continue
             
             node = {
                 'id': None,
                 'parent': None,
-                'order': None,
-                'total': None,
                 'text': '',
                 'styles': {},
-                'imp': False,
+                'line': index,
             }
             
-            # 找到格式區塊的結束位置
-            depth = 0
-            end = -1
-            for i, c in enumerate(stripped):
-                if c == '[':
-                    depth += 1
-                elif c == ']':
-                    depth -= 1
-                if depth == 0:
-                    end = i
-                    break
-            
-            if end == -1:
-                continue
-            
-            fmt = stripped[1:end]
-            text = stripped[end+1:].strip()
-            
-            # 解析格式標記
-            id_match = re.search(r'id<([^>]+)>', fmt)
-            if id_match:
-                node['id'] = id_match.group(1)
-            
-            parent_match = re.search(r'p<([^>]+)>', fmt)
-            if parent_match:
-                node['parent'] = parent_match.group(1)
-            
-            order_match = re.search(r'o<(\d+)/(\d+)>', fmt)
-            if order_match:
-                node['order'] = int(order_match.group(1))
-                node['total'] = int(order_match.group(2))
-            
-            if 'imp' in fmt.split():
-                node['imp'] = True
+            for token in split_top_level(stripped[1:end]):
+                name, value = split_token(token)
+                if name in TREE_NODE_NAMES and value:
+                    node['id' if name == 'id' else 'parent'] = value
+                else:
+                    self.warnings.append((index, f'樹節點不認識的設定：{token}'))
             
             # 解析文本樣式
-            text_parsed = parse_cell_format(text)
+            text_parsed = parse_format(stripped[end+1:])
+            for warning in text_parsed['warnings']:
+                self.warnings.append((index, warning))
             node['text'] = text_parsed['text']
             node['styles'] = text_parsed['styles']
             

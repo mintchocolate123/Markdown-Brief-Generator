@@ -5,31 +5,41 @@ html.py - 將投影片內容渲染為 HTML
 """
 
 import re
-from typing import Dict, List, Any
+from typing import Any, Callable, Dict, List, Optional, Tuple
 from briefgen.parsing.blocks import MarkdownParser
 from briefgen.highlighter import SyntaxHighlighter
 from briefgen.model import Slide, SlideTheme
-from briefgen.tags import parse_line_format, parse_cell_format
+from briefgen.tags import parse_format
+
+
+# (投影片索引, 內容行索引, 訊息)
+WarnFunc = Callable[[int, int, str], None]
 
 
 class HTMLRenderer:
     """HTML 渲染器"""
     
-    def __init__(self, theme: SlideTheme):
+    def __init__(self, theme: SlideTheme, warn: Optional[WarnFunc] = None):
         self.theme = theme
         self.parser = MarkdownParser()
         self.highlighter = SyntaxHighlighter()
+        self._warn_func = warn
+        self._warnings: List[Tuple[int, str]] = []
+    
+    def _warn(self, line_index: int, message: str) -> None:
+        self._warnings.append((line_index, message))
     
     def render_slide(self, slide: Slide, index: int) -> str:
         """渲染單張投影片為獨立的 HTML"""
         # 解析 Markdown 內容
-        content, blocks = self.parser.parse(slide.content)
+        content, blocks, line_map = self.parser.parse(slide.content)
+        self._warnings = list(self.parser.warnings)
         
         # 建立區塊映射
         block_map = {block['key']: block for block in blocks}
         
         # 渲染主要內容
-        content_html = self._render_content(content, block_map)
+        content_html = self._render_content(content, block_map, line_map)
         
         # 組裝投影片 HTML（符合原始格式）
         slide_id = f'slide{index + 1}'
@@ -40,15 +50,20 @@ class HTMLRenderer:
         else:
             html = f'<div class="slide" id="{slide_id}"><div class="slide-content">{content_html}</div></div>'
         
+        # 依行號順序回報警告
+        if self._warn_func:
+            for line_index, message in sorted(self._warnings, key=lambda w: w[0]):
+                self._warn_func(index, line_index, message)
+        
         return html
     
-    def _render_content(self, content: str, block_map: Dict[str, Dict]) -> str:
+    def _render_content(self, content: str, block_map: Dict[str, Dict], line_map: List[int]) -> str:
         """渲染內容文本"""
         lines = content.split('\n')
         result = []
         paragraph = []
         
-        for line in lines:
+        for line_index, line in zip(line_map, lines):
             stripped = line.strip()
             
             # 區塊引用
@@ -69,19 +84,23 @@ class HTMLRenderer:
                     paragraph = []
                 continue
             
-            paragraph.append(line)
+            paragraph.append((line_index, line))
         
         if paragraph:
             result.append(self._render_paragraph(paragraph))
         
         return '\n'.join(result)
     
-    def _render_paragraph(self, lines: List[str]) -> str:
+    def _render_paragraph(self, lines: List[Tuple[int, str]]) -> str:
         """渲染段落"""
         html_lines = []
         
-        for line in lines:
-            parsed = parse_line_format(line)
+        for line_index, line in lines:
+            parsed = parse_format(line)
+            for warning in parsed['warnings']:
+                self._warn(line_index, warning)
+            # cont 尚未實作，暫時當作一般行
+            parsed['text'] = parsed['text'].strip()
             html_lines.append(self._render_formatted_line(parsed))
         
         return ''.join(html_lines)
@@ -217,11 +236,13 @@ class HTMLRenderer:
         rows_html = []
         for row_idx, row in enumerate(data):
             cells_html = []
-            for cell in row:
-                parsed = parse_cell_format(cell)
+            for cell, line_index in zip(row, block['cell_lines'][row_idx]):
+                parsed = parse_format(cell)
+                for warning in parsed['warnings']:
+                    self._warn(line_index, warning)
                 
                 # 第一行或important的樣式
-                if row_idx == 0 or parsed['imp']:
+                if row_idx == 0 or parsed['is_important']:
                     cell_style = 'padding:10px 15px;border:1px solid rgba(255,255,255,.2);text-align:center;background:linear-gradient(90deg,#e9456088,#ff6b6b88);font-weight:bold;'
                 else:
                     cell_style = 'padding:10px 15px;border:1px solid rgba(255,255,255,.2);text-align:center;'
@@ -271,9 +292,6 @@ class HTMLRenderer:
         for node_idx, node in enumerate(nodes):
             # 節點樣式
             node_style = 'background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;display:inline-block;margin:5px;border:2px solid rgba(255,255,255,.3);'
-            
-            if node.get('imp'):
-                node_style = 'background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;display:inline-block;margin:5px;border:2px solid rgba(255,255,255,.3);'
             
             # 加入自訂樣式
             for k, v in node.get('styles', {}).items():

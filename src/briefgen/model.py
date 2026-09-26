@@ -40,6 +40,8 @@ class Slide:
     subtitle: str = ""
     content: str = ""  # Markdown 格式內容
     metadata: Dict[str, Any] = field(default_factory=dict)
+    # 每個內容行在來源 Markdown 檔中的行號（僅供警告使用，不寫入 JSON）
+    source_lines: Optional[List[int]] = field(default=None, repr=False, compare=False)
     
     def to_dict(self) -> Dict[str, Any]:
         return {

@@ -5,6 +5,7 @@ generator.py - 簡報生成器
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Optional
 from jinja2 import Template
@@ -19,12 +20,14 @@ class PresentationGenerator:
     
     def __init__(self, presentation: Optional[Presentation] = None):
         self.presentation = presentation or Presentation()
+        self.source_path: Optional[str] = None
     
     def load_from_json(self, filepath: str) -> None:
         """從 JSON 檔案載入專案"""
         with open(filepath, 'r', encoding='utf-8') as f:
             data = json.load(f)
         self.presentation = Presentation.from_dict(data)
+        self.source_path = None
     
     def save_to_json(self, filepath: str) -> None:
         """儲存專案為 JSON 檔案"""
@@ -39,6 +42,16 @@ class PresentationGenerator:
         # 解析 Markdown 檔案
         slides = parse_markdown_slides(content)
         self.presentation.slides = slides
+        self.source_path = filepath
+    
+    def _warn(self, slide_index: int, line_index: int, message: str) -> None:
+        """在 stderr 印出格式警告與位置"""
+        slide = self.presentation.slides[slide_index]
+        if self.source_path and slide.source_lines:
+            location = f'{self.source_path}:{slide.source_lines[line_index]}'
+        else:
+            location = f'投影片 {slide_index + 1} 第 {line_index + 1} 行'
+        print(f'{location}: {message}', file=sys.stderr)
     
     def generate_html(self, output_path: str, template_path: Optional[str] = None) -> None:
         """生成 HTML 簡報"""
@@ -52,7 +65,7 @@ class PresentationGenerator:
         template = Template(template_content)
         
         # 渲染每張投影片
-        renderer = HTMLRenderer(self.presentation.theme)
+        renderer = HTMLRenderer(self.presentation.theme, warn=self._warn)
         slide_htmls = []
         
         for i, slide in enumerate(self.presentation.slides):
@@ -75,7 +88,7 @@ class PresentationGenerator:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
         
-        renderer = HTMLRenderer(self.presentation.theme)
+        renderer = HTMLRenderer(self.presentation.theme, warn=self._warn)
         
         for i, slide in enumerate(self.presentation.slides):
             slide_html = renderer.render_slide(slide, i)
