@@ -1,5 +1,7 @@
 """tools/migrate_syntax.py 的單元測試"""
 
+from pathlib import Path
+
 import pytest
 
 from migrate_syntax import migrate
@@ -171,3 +173,22 @@ def test_line_numbers_in_report():
 
 def test_trailing_newline_is_kept():
     assert migrate('<b><i>x\n')[0] == '<b i>x\n'
+
+
+FIXTURES = Path(__file__).resolve().parent / 'fixtures'
+
+
+@pytest.mark.parametrize('name, expected_report', [
+    ('example', []),
+    ('格式參考', []),
+    ('edge_cases', [
+        '第 19 行: 段落行首的 [注意] 在新語法中會顯示為文字（舊版會被隱藏）',
+        '第 65 行: 移除樹節點的 imp',
+        '第 66 行: 移除樹節點的 o<1/2>',
+        '第 67 行: 移除樹節點的 o<2/2>',
+    ]),
+])
+def test_fixtures_convert_to_new_versions(name, expected_report):
+    old = (FIXTURES / 'old' / f'{name}.md').read_text(encoding='utf-8')
+    new = (FIXTURES / 'new' / f'{name}.md').read_text(encoding='utf-8')
+    assert migrate(old) == (new, expected_report)
