@@ -20,6 +20,12 @@ import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
 
+try:
+    from briefgen.parsing.slides import split_slide_ranges
+except ImportError:  # 尚未 pip install 時，從原始碼目錄載入
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'src'))
+    from briefgen.parsing.slides import split_slide_ranges
+
 
 FLAG_NAMES = {'b', 'bold', 'i', 'italic', 'u', 'underline', 's', 'strike', 'ct', 'imp', 'cont'}
 
@@ -273,15 +279,11 @@ def migrate(text: str) -> Tuple[str, List[str]]:
     lines = text.split('\n')
     report = Report()
 
-    # 與舊版相同，以單獨一行的 --- 切割投影片
-    separators = [i for i, line in enumerate(lines) if line == '---' and 0 < i < len(lines) - 1]
-    bounds = [-1] + separators + [len(lines)]
-
+    # 與生成器相同的分頁方式（程式碼區塊內的 --- 不分頁），分隔線原樣保留
     out: List[str] = []
-    for k in range(len(bounds) - 1):
-        start, stop = bounds[k] + 1, bounds[k + 1]
+    for k, (start, stop) in enumerate(split_slide_ranges(lines)):
         if k > 0:
-            out.append(lines[bounds[k]])
+            out.append(lines[start - 1])
         out.extend(migrate_slide(lines[start:stop], start, report))
 
     return '\n'.join(out), report.lines

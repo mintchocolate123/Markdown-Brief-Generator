@@ -15,7 +15,8 @@ python tools/migrate_syntax.py 舊.md -o 新.md
 
 原始碼在 `src/briefgen/`，資料流：
 
-1. `parsing/slides.py`：以單獨一行 `---` 切割投影片，取出 `# ` 標題與 `## ` 副標題，
+1. `parsing/slides.py`：以單獨一行 `---` 切割投影片，取出 `# ` 標題與 `## ` 副標題；
+   ``` 程式碼區塊內的 `---` 與 `#` 不影響分頁和標題（轉換工具共用同一套切法），
    `Slide.source_lines` 記錄每個內容行在原始檔的行號（不寫入 JSON）
 2. `parsing/blocks.py`：`MarkdownParser.parse()` 抽出程式碼、`[table]`、`[tree]` 區塊，
    以 `[BLOCK_REF:key]` 佔位，並回傳每行的原始行索引；樹節點文字在這裡解析

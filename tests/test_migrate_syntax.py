@@ -161,9 +161,14 @@ def test_unclosed_block_is_treated_as_paragraph():
     assert text == '[table]\n<b i>x'
 
 
+def test_separator_inside_code_block_does_not_split():
+    text = '```\n---\n<b><i>x\n```'
+    assert migrate(text) == (text, [])
+
+
 def test_blocks_do_not_span_slides():
-    text, _ = migrate('```\n---\n<b><i>x\n```')
-    assert text == '```\n---\n<b i>x\n```'
+    text, _ = migrate('[table]\n---\n<b><i>x\n[/table]')
+    assert text == '[table]\n---\n<b i>x\n[/table]'
 
 
 def test_line_numbers_in_report():
