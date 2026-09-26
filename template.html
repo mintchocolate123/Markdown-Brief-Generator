@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <meta name="generator" content="PresentationGenerator">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 20px 100px;
+        }
+        
+        .slide {
+            display: none;
+            animation: fadeIn .5s;
+        }
+        
+        .slide.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-header {
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(233, 69, 96, .3);
+        }
+        
+        .slide-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .slide-header .subtitle {
+            font-size: 1.2em;
+            opacity: .9;
+        }
+        
+        .slide-content {
+            background: rgba(255, 255, 255, .1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            line-height: 2;
+            font-size: 1.15em;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+        }
+        
+        .slide-content > div {
+            margin-bottom: 10px;
+        }
+        
+        .slide-content > div:last-child {
+            margin-bottom: 0;
+        }
+        
+        .slide-content a {
+            color: #feca57;
+        }
+        
+        .slide-content a:hover {
+            color: #fff;
+        }
+        
+        .slide-content table tr:nth-child(even) {
+            background: rgba(255, 255, 255, .05);
+        }
+        
+        .slide-content table tr:hover {
+            background: rgba(255, 255, 255, .1);
+        }
+        
+        .navigation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 52, 96, .95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, .3);
+        }
+        
+        .nav-btn {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all .3s;
+            font-weight: bold;
+        }
+        
+        .nav-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, .4);
+        }
+        
+        .nav-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .page-indicator {
+            background: rgba(255, 255, 255, .1);
+            color: #feca57;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e94560, #feca57);
+            transition: width .3s;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="container">
+        {% for slide_html in slides %}
+        {{ slide_html|safe }}
+        {% endfor %}
+    </div>
+    
+    <div class="navigation">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一張</button>
+        <div class="page-indicator" id="pageIndicator">1 / {{ slides|length }}</div>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一張 ▶</button>
+    </div>
+    
+    <script>
+        let currentIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            document.getElementById('pageIndicator').textContent = `${index + 1} / ${totalSlides}`;
+            document.getElementById('prevBtn').disabled = (index === 0);
+            document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+            
+            const progress = ((index + 1) / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            window.scrollTo(0, 0);
+        }
+        
+        function changeSlide(direction) {
+            currentIndex = Math.max(0, Math.min(totalSlides - 1, currentIndex + direction));
+            showSlide(currentIndex);
+        }
+        
+        function copyCode(codeId) {
+            const codeElement = document.getElementById('code' + codeId);
+            const btn = document.getElementById('copyBtn' + codeId);
+            
+            if (!codeElement) return;
+            
+            // 取得原始程式碼（解碼 HTML 實體）
+            const code = codeElement.textContent;
+            
+            // 複製到剪貼簿
+            navigator.clipboard.writeText(code).then(() => {
+                // 成功提示
+                const originalText = btn.textContent;
+                btn.textContent = '已複製';
+                btn.style.background = '#00d4aa';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#4ecdc4';
+                }, 2000);
+            }).catch(err => {
+                // 失敗提示
+                console.error('複製失敗:', err);
+                btn.textContent = '複製失敗';
+                btn.style.background = '#ff6b6b';
+                
+                setTimeout(() => {
+                    btn.textContent = '複製';
+                    btn.style.background = '#4ecdc4';
+                }, 2000);
+            });
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft') {
+                changeSlide(-1);
+            }
+        });
+        
+        showSlide(0);
+    </script>
+</body>
+</html>

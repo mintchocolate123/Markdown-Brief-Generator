@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+*_output.html
+test*.html
+.vscode/
+Brief/
