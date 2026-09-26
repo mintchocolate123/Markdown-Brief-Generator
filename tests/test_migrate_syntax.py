@@ -92,7 +92,7 @@ def test_new_syntax_is_idempotent():
 
 def test_new_syntax_blocks_are_idempotent():
     text = '\n'.join(['[table]', '[width=full]', '<b i>x', '[/table]',
-                      '[tree]', '[id=1] <imp>根', '[id=2 p=1] 子', '[/tree]',
+                      '[tree]', '[width=full]', '[id=1] <imp>根', '[id=2 p=1] 子', '[/tree]',
                       '```py', '[width=full]', '```'])
     assert migrate(text) == (text, [])
 
@@ -197,3 +197,12 @@ def test_fixtures_convert_to_new_versions(name, expected_report):
     old = (FIXTURES / 'old' / f'{name}.md').read_text(encoding='utf-8')
     new = (FIXTURES / 'new' / f'{name}.md').read_text(encoding='utf-8')
     assert migrate(old) == (new, expected_report)
+
+
+@pytest.mark.parametrize('name', ['example', '格式參考', 'edge_cases'])
+def test_converting_new_fixtures_again_changes_nothing(name):
+    new = (FIXTURES / 'new' / f'{name}.md').read_text(encoding='utf-8')
+    text, report = migrate(new)
+    assert text == new
+    # 只可能再次出現「[...] 會顯示為文字」的提醒，不會移除任何內容
+    assert not [line for line in report if '移除' in line]

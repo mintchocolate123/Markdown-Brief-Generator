@@ -45,6 +45,7 @@ TREE_REMOVED_NAMES = {'o', 'imp'}
 OLD_ITEM_RE = re.compile(r'^(\w+)<(.*)>$')
 NEW_ITEM_RE = re.compile(r'^(\w+)=(.*)$')
 WIDTH_RE = re.compile(r'^(\s*)\[width<([^>]+)>\](.*)$')
+NEW_WIDTH_RE = re.compile(r'^\s*\[width=[^\]]+\]')
 
 
 class Report:
@@ -181,6 +182,9 @@ def convert_leading_tags(text: str, report: Report, allow_square: bool) -> str:
 
 
 def convert_width(line: str) -> Optional[str]:
+    """轉換寬度設定行；已是新語法時原樣回傳，不是寬度設定時回傳 None"""
+    if NEW_WIDTH_RE.match(line):
+        return line
     match = WIDTH_RE.match(line)
     if not match:
         return None
