@@ -30,57 +30,55 @@
 ├── tests/                   # pytest 測試與 golden 檔
 ├── launcher.py              # 中文互動式啟動器
 ├── start.bat                # Windows 雙擊啟動
+├── pyproject.toml           # 套件設定（pip install -e .）
 ├── requirements.txt         # 執行依賴
 └── requirements-dev.txt     # 開發依賴（pytest）
 ```
 
 ## 安裝
 
+在專案目錄執行一次：
+
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
+
+之後在任何目錄都可以使用 `briefgen` 指令（或 `python -m briefgen`）。
 
 ## 使用方式
 
 最簡單的方式是雙擊 `start.bat`（或執行 `python launcher.py`），依選單操作。
 
-命令列使用時，先讓 Python 找得到 `src/` 下的套件：
-
-```bash
-# macOS / Linux
-export PYTHONPATH=src
-# Windows（cmd）
-set PYTHONPATH=src
-```
+命令列中的 `briefgen` 也可以寫成 `python -m briefgen`（例如 Python 的 Scripts 目錄不在 PATH 時）。
 
 ### 1. 建立新專案
 
 ```bash
-python -m briefgen new -o my_presentation.json --title "我的簡報"
+briefgen new -o my_presentation.json --title "我的簡報"
 ```
 
 ### 2. 從 Markdown 生成簡報
 
 ```bash
-python -m briefgen build -i examples/example.md -o output.html
+briefgen build -i examples/example.md -o output.html
 ```
 
 ### 3. 從 JSON 專案生成簡報
 
 ```bash
-python -m briefgen build -i my_presentation.json -o output.html
+briefgen build -i my_presentation.json -o output.html
 ```
 
 ### 4. 匯出個別投影片 HTML
 
 ```bash
-python -m briefgen export-slides -i examples/example.md -o slides_output/
+briefgen export-slides -i examples/example.md -o slides_output/
 ```
 
 ### 5. 使用自訂模板
 
 ```bash
-python -m briefgen build -i examples/example.md -o output.html --template custom_template.html
+briefgen build -i examples/example.md -o output.html --template custom_template.html
 ```
 
 ## Markdown 格式說明
@@ -97,7 +95,7 @@ python -m briefgen build -i examples/example.md -o output.html --template custom
 完整說明見 [docs/格式參考.md](docs/格式參考.md)。它本身也是一份簡報，可以直接生成來看效果：
 
 ```bash
-python -m briefgen build -i docs/格式參考.md -o 格式參考.html
+briefgen build -i docs/格式參考.md -o 格式參考.html
 ```
 
 格式寫錯時（名稱不認識、值不合法），該行會照原樣顯示，並在 stderr 印出 `檔名:行號: 訊息`。
@@ -199,7 +197,7 @@ gen.generate_individual_slides('slides/')
 ## 測試
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -e . -r requirements-dev.txt
 python -m pytest
 ```
 

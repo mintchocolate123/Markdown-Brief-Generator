@@ -4,13 +4,11 @@
 啟動器 - 支援路徑切換的中文互動式介面
 """
 
+import importlib.util
 import os
 import sys
 import subprocess
 from pathlib import Path
-
-
-SRC_DIR = Path(__file__).resolve().parent / 'src'
 
 
 def clear_screen():
@@ -29,10 +27,8 @@ def get_absolute_path(path_str):
 
 def run_generator(*args):
     """以 python -m briefgen 執行生成器"""
-    env = os.environ.copy()
-    env['PYTHONPATH'] = os.pathsep.join(filter(None, [str(SRC_DIR), env.get('PYTHONPATH')]))
     try:
-        result = subprocess.run([sys.executable, '-m', 'briefgen', *args], env=env, check=True)
+        result = subprocess.run([sys.executable, '-m', 'briefgen', *args], check=True)
         return result.returncode == 0
     except subprocess.CalledProcessError:
         return False
@@ -128,10 +124,19 @@ def generate_example():
 
 def main():
     """主選單"""
+    if importlib.util.find_spec('briefgen') is None:
+        print("找不到 briefgen 套件，請先在工具目錄執行一次：")
+        print()
+        print("    pip install -e .")
+        input("\n按 Enter 結束...")
+        return
+    
+    from briefgen import __version__
+    
     while True:
         clear_screen()
         print("=" * 50)
-        print("    HTML 簡報生成器 v2.0")
+        print(f"    HTML 簡報生成器 v{__version__}")
         print("=" * 50)
         print(f"\n當前目錄: {Path.cwd()}\n")
         print("[1] 從 Markdown 生成簡報")

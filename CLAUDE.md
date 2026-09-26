@@ -5,9 +5,9 @@ Markdown 轉 HTML 簡報生成器。
 ## 常用指令
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -e . -r requirements-dev.txt
 python -m pytest                                    # pyproject.toml 已設定 pythonpath=src,tools
-PYTHONPATH=src python -m briefgen build -i examples/example.md -o out.html
+briefgen build -i examples/example.md -o out.html   # 等同 python -m briefgen
 python tools/migrate_syntax.py 舊.md -o 新.md
 ```
 
@@ -29,7 +29,8 @@ python tools/migrate_syntax.py 舊.md -o 新.md
 6. `cli.py` / `__main__.py`：`python -m briefgen new|build|export-slides`
 
 其他：
-- `launcher.py`、`start.bat` 留在根目錄，以 `python -m briefgen` 並設定 `PYTHONPATH=src` 呼叫
+- `launcher.py`、`start.bat` 留在根目錄，以 `python -m briefgen` 呼叫；未安裝套件時提示 `pip install -e .`
+- 版本號只寫在 `src/briefgen/__init__.py` 的 `__version__`，pyproject 與 launcher 由此讀取
 - `tools/migrate_syntax.py`：舊語法轉換，已是新語法的內容不變（可重複執行）
 - `docs/格式參考.md` 是唯一的格式說明，本身也是簡報；`examples/example.md` 是範例
 
