@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-syntax_highlighter.py - 程式碼語法高亮
+highlighter.py - 程式碼語法高亮
 """
 
 import re

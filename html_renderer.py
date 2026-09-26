@@ -7,7 +7,7 @@ html_renderer.py - 將投影片內容渲染為 HTML
 import re
 from typing import Dict, List, Any
 from markdown_parser import MarkdownParser
-from syntax_highlighter import SyntaxHighlighter
+from briefgen.highlighter import SyntaxHighlighter
 from briefgen.model import Slide, SlideTheme
 
 
