@@ -8,6 +8,8 @@ markdown_parser.py - Markdown 內容解析器
 import re
 from typing import Dict, List, Tuple, Any, Optional
 
+from briefgen.tags import parse_cell_format
+
 
 class MarkdownParser:
     """擴展的 Markdown 解析器"""
@@ -266,91 +268,10 @@ class MarkdownParser:
                 node['imp'] = True
             
             # 解析文本樣式
-            text_parsed = self._parse_inline_format(text)
+            text_parsed = parse_cell_format(text)
             node['text'] = text_parsed['text']
             node['styles'] = text_parsed['styles']
             
             nodes.append(node)
         
         return nodes
-    
-    def _parse_inline_format(self, text: str) -> Dict[str, Any]:
-        """解析行內格式標記"""
-        result = {
-            'text': text,
-            'styles': {},
-            'imp': False,
-        }
-        
-        if not text.startswith('<'):
-            return result
-        
-        # 找到格式區塊結束
-        depth = 0
-        end = -1
-        for i, c in enumerate(text):
-            if c == '<':
-                depth += 1
-            elif c == '>':
-                depth -= 1
-            if depth == 0:
-                end = i
-                break
-        
-        if end == -1:
-            return result
-        
-        fmt = text[1:end]
-        result['text'] = text[end+1:]
-        
-        # 解析各種格式
-        if 'imp' in fmt.split():
-            result['imp'] = True
-        
-        # 字體大小
-        size_match = re.search(r'size<(\d)>', fmt)
-        if size_match:
-            size_map = {
-                '1': '0.7em', '2': '0.85em', '3': '1em',
-                '4': '1.2em', '5': '1.5em', '6': '2em', '7': '2.5em'
-            }
-            size = size_match.group(1)
-            if size in size_map:
-                result['styles']['font-size'] = size_map[size]
-        
-        # 顏色
-        color_match = re.search(r'color<([^>]+)>', fmt)
-        if color_match:
-            result['styles']['color'] = self._normalize_color(color_match.group(1))
-        
-        # 粗體
-        if 'b' in fmt.split() or 'bold' in fmt.split():
-            result['styles']['font-weight'] = 'bold'
-        
-        # 斜體
-        if 'i' in fmt.split() or 'italic' in fmt.split():
-            result['styles']['font-style'] = 'italic'
-        
-        # 底線和刪除線
-        underline = 'u' in fmt.split() or 'underline' in fmt.split()
-        strike = 's' in fmt.split() or 'strike' in fmt.split()
-        
-        if underline and strike:
-            result['styles']['text-decoration'] = 'underline line-through'
-        elif underline:
-            result['styles']['text-decoration'] = 'underline'
-        elif strike:
-            result['styles']['text-decoration'] = 'line-through'
-        
-        return result
-    
-    def _normalize_color(self, color: str) -> str:
-        """標準化顏色值"""
-        color_map = {
-            'black': '#000', 'white': '#fff',
-            'red': '#f00', 'green': '#008000', 'blue': '#00f',
-            'yellow': '#ff0', 'cyan': '#0ff',
-            'orange': '#ffa500', 'purple': '#800080',
-            'pink': '#ffc0cb', 'gray': '#808080',
-        }
-        return color_map.get(color.strip().lower(), color)
