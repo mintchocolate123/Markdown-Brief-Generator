@@ -33,8 +33,11 @@ Markdown 轉 HTML 簡報生成器。
     <cont color=red>紅色的接續文字
 
 - 接續行變成上一行 `<div>` 裡的 `<span>`，只套文字層級格式：b、i、u、s、size、color、link
+- 區塊層級格式（pivot、tab、ct、imp）由第一行決定，作用於整行包含所有接續段（imp 的接續段在框內）
+- 文字層級格式（b、i、u、s、size、color、link）只作用於各自那一段，不繼承；
+  有接續段時第一段的文字層級格式包在自己的 `<span>` 裡
 - 區塊層級格式（pivot、tab、imp、ct、img）寫在 cont 行時忽略並警告
-- 不繼承上一段的格式，每段只套自己寫的格式
+- 表格或程式碼區塊後緊接的 cont 行視為段落第一行
 - cont 行 `>` 後面的空白保留，不 strip，讓英文可以寫 `<cont b> word`
 - 段落第一行是 cont 時當普通行處理並警告
 - 儲存格和樹節點不支援 cont，出現時警告

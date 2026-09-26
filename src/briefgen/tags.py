@@ -42,6 +42,7 @@ def new_result(text: str) -> Dict[str, Any]:
         'link': None,
         'image': None,
         'styles': {},
+        'formats': [],
         'warnings': [],
     }
 
@@ -53,6 +54,9 @@ FLAG_FORMATS = {
     's': 'strike', 'strike': 'strike',
     'ct': 'ct', 'imp': 'imp', 'cont': 'cont',
 }
+
+# 只作用於整行的格式，不能用在 cont 行
+BLOCK_FORMATS = ('pivot', 'tab', 'imp', 'ct', 'img')
 
 VALUE_FORMATS = {
     'tab': lambda v: re.fullmatch(r'\d+', v) is not None,
@@ -150,6 +154,7 @@ def parse_format(line: str) -> Dict[str, Any]:
             result['warnings'].append(f'{error}，整行視為文字')
             return result
 
+    result['formats'] = [name for name, _ in parsed]
     decorations = set()
     for name, value in parsed:
         kind = FLAG_FORMATS.get(name, name)

@@ -227,6 +227,9 @@ class MarkdownParser:
             text_parsed = parse_format(stripped[end+1:])
             for warning in text_parsed['warnings']:
                 self.warnings.append((index, warning))
+            if text_parsed['cont']:
+                self.warnings.append((index, '樹節點不支援 cont，已忽略'))
+                text_parsed['text'] = text_parsed['text'].strip()
             node['text'] = text_parsed['text']
             node['styles'] = text_parsed['styles']
             

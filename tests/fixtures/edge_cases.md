@@ -5,7 +5,8 @@
 <u><s>底線加刪除線
 <size<4>><color<red>><b>紅色粗體
 <color<red>><color<blue>>後者覆蓋
-<cont color<red>>同一個角括號內多個格式
+
+<i u color<green>>同一個角括號內多個格式
 <link<i>>連結被誤判為斜體
 <link<https://example.com/a?x=1>>含參數的連結
 <img<https://example.com/a.png,300,150>>
@@ -31,6 +32,11 @@
 <cont b> word
 
 <cont>段落第一行就是接續
+
+[table]
+區塊
+[/table]
+<cont>區塊後緊接的接續
 
 ---
 

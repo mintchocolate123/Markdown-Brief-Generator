@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from briefgen.parsing.blocks import MarkdownParser
 from briefgen.highlighter import SyntaxHighlighter
 from briefgen.model import Slide, SlideTheme
-from briefgen.tags import parse_format
+from briefgen.tags import BLOCK_FORMATS, parse_format
 
 
 # (投影片索引, 內容行索引, 訊息)
@@ -92,25 +92,53 @@ class HTMLRenderer:
         return '\n'.join(result)
     
     def _render_paragraph(self, lines: List[Tuple[int, str]]) -> str:
-        """渲染段落"""
-        html_lines = []
+        """渲染段落（cont 行接在上一行的 <div> 裡）"""
+        entries = []  # (解析結果, 接續的 <span> 列表)
         
         for line_index, line in lines:
             parsed = parse_format(line)
             for warning in parsed['warnings']:
                 self._warn(line_index, warning)
-            # cont 尚未實作，暫時當作一般行
-            parsed['text'] = parsed['text'].strip()
-            html_lines.append(self._render_formatted_line(parsed))
+            
+            if parsed['cont']:
+                if entries:
+                    ignored = [name for name in parsed['formats'] if name in BLOCK_FORMATS]
+                    if ignored:
+                        self._warn(line_index, f'cont 行不支援區塊格式 {"、".join(ignored)}，已忽略')
+                    entries[-1][1].append(self._render_cont_span(parsed))
+                    continue
+                self._warn(line_index, '段落第一行的 cont 沒有可接續的行，當作一般行')
+                parsed['text'] = parsed['text'].strip()
+            
+            entries.append((parsed, []))
         
-        return ''.join(html_lines)
+        return ''.join(self._render_formatted_line(parsed, ''.join(spans))
+                       for parsed, spans in entries)
     
-    def _render_formatted_line(self, parsed: Dict[str, Any]) -> str:
-        """渲染格式化的行"""
+    def _render_cont_span(self, parsed: Dict[str, Any]) -> str:
+        """渲染 cont 行：只套文字層級格式"""
+        return self._render_text_segment(parsed, always_span=True)
+    
+    def _render_text_segment(self, parsed: Dict[str, Any], always_span: bool) -> str:
+        """渲染一段文字與它自己的文字層級格式（styles、link）"""
+        style_str = ';'.join(f'{key}:{value}' for key, value in parsed['styles'].items())
+        text = self._render_link(self._escape_html(parsed['text']), parsed['link'])
+        if style_str:
+            return f'<span style="{style_str}">{text}</span>'
+        return f'<span>{text}</span>' if always_span else text
+    
+    def _render_link(self, text: str, link: Optional[str]) -> str:
+        """超連結"""
+        if not link:
+            return text
+        return f'<a href="{link}" target="_blank" style="color:#feca57;text-decoration:underline;">{text}</a>'
+    
+    def _render_formatted_line(self, parsed: Dict[str, Any], continuation: str = '') -> str:
+        """渲染格式化的行，continuation 是接在文字後面的 cont 內容"""
         # 處理圖片
         if parsed['image']:
             img = parsed['image']
-            return f'<div><img src="{img["url"]}" style="max-width:100%;border-radius:10px;"></div>'
+            return f'<div><img src="{img["url"]}" style="max-width:100%;border-radius:10px;">{continuation}</div>'
         
         # 建立樣式字串
         style_parts = []
@@ -142,18 +170,18 @@ class HTMLRenderer:
         if parsed['align']:
             style_parts.append(f'text-align:{parsed["align"]}')
         
-        # 自訂樣式
-        for key, value in parsed['styles'].items():
-            style_parts.append(f'{key}:{value}')
+        if continuation:
+            # 有接續段時，第一段的文字層級格式只包住自己，區塊層級格式留在整行
+            text = self._render_text_segment(parsed, always_span=False) + continuation
+        else:
+            # 自訂樣式
+            for key, value in parsed['styles'].items():
+                style_parts.append(f'{key}:{value}')
+            
+            # 文本內容、超連結
+            text = self._render_link(self._escape_html(parsed['text']), parsed['link'])
         
         style_str = ';'.join(style_parts) if style_parts else ''
-        
-        # 文本內容
-        text = self._escape_html(parsed['text'])
-        
-        # 超連結
-        if parsed['link']:
-            text = f'<a href="{parsed["link"]}" target="_blank" style="color:#feca57;text-decoration:underline;">{text}</a>'
         
         # 包裝樣式
         if parsed['is_subtitle']:
@@ -237,9 +265,7 @@ class HTMLRenderer:
         for row_idx, row in enumerate(data):
             cells_html = []
             for cell, line_index in zip(row, block['cell_lines'][row_idx]):
-                parsed = parse_format(cell)
-                for warning in parsed['warnings']:
-                    self._warn(line_index, warning)
+                parsed = self._parse_cell(cell, line_index)
                 
                 # 第一行或important的樣式
                 if row_idx == 0 or parsed['is_important']:
@@ -257,6 +283,16 @@ class HTMLRenderer:
             rows_html.append(f'<tr>{"".join(cells_html)}</tr>')
         
         return f'<div><table style="border-collapse:collapse;background:rgba(255,255,255,.1);border-radius:10px;overflow:hidden;margin:5px 0;{width_style}">{"".join(rows_html)}</table></div>'
+    
+    def _parse_cell(self, text: str, line_index: int) -> Dict[str, Any]:
+        """解析儲存格文字（不支援 cont）"""
+        parsed = parse_format(text)
+        for warning in parsed['warnings']:
+            self._warn(line_index, warning)
+        if parsed['cont']:
+            self._warn(line_index, '表格儲存格不支援 cont，已忽略')
+            parsed['text'] = parsed['text'].strip()
+        return parsed
     
     def _render_tree_block(self, block: Dict[str, Any]) -> str:
         """渲染樹狀圖區塊"""
