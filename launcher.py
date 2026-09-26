@@ -106,11 +106,11 @@ def generate_example():
     print()
     
     script_dir = Path(__file__).parent
-    example = script_dir / 'example.md'
+    example = script_dir / 'examples' / 'example.md'
     output = Path.cwd() / 'example_output.html'
     
     if not example.exists():
-        print("找不到 example.md")
+        print("找不到 examples/example.md")
         input("\n按 Enter 繼續...")
         return
     

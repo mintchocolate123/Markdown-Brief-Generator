@@ -1,2 +1,2 @@
 @echo off
-python launcher.py
+python "%~dp0launcher.py"
