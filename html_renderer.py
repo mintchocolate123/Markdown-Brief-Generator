@@ -8,7 +8,7 @@ import re
 from typing import Dict, List, Any
 from markdown_parser import MarkdownParser
 from syntax_highlighter import SyntaxHighlighter
-from slide_model import Slide, SlideTheme
+from briefgen.model import Slide, SlideTheme
 
 
 class HTMLRenderer:

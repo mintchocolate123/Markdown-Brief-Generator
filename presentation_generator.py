@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Optional
 from jinja2 import Template
 
-from slide_model import Presentation, Slide, SlideTheme
+from briefgen.model import Presentation, Slide, SlideTheme
 from html_renderer import HTMLRenderer
 
 

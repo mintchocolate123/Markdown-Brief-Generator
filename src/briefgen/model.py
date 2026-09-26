@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-slide_model.py - 投影片數據模型
+model.py - 投影片數據模型
 """
 
 from dataclasses import dataclass, field
