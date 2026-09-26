@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-markdown_parser.py - Markdown 內容解析器
+blocks.py - Markdown 區塊解析器
 支援擴展語法：表格、程式碼區塊、樹狀圖等
 """
 
