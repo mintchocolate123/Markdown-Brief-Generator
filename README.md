@@ -6,15 +6,32 @@
 
 ```
 .
-├── slide_model.py           # 資料模型（Slide, Presentation, Theme）
-├── markdown_parser.py       # Markdown 解析器
-├── syntax_highlighter.py   # 程式碼語法高亮
-├── html_renderer.py         # HTML 渲染器
-├── presentation_generator.py # 主程式
-├── template.html            # Jinja2 模板
-├── requirements.txt         # 依賴套件
-├── example.md              # 範例 Markdown 投影片
-└── README.md               # 說明文件
+├── src/briefgen/
+│   ├── __main__.py          # python -m briefgen 進入點
+│   ├── cli.py               # 命令列介面
+│   ├── generator.py         # PresentationGenerator（載入/儲存、生成 HTML）
+│   ├── model.py             # 資料模型（Slide, Presentation, SlideTheme）
+│   ├── tags.py              # 行首格式解析（行內、儲存格、樹節點共用）
+│   ├── highlighter.py       # 程式碼語法高亮
+│   ├── parsing/
+│   │   ├── slides.py        # 將 Markdown 檔切成投影片
+│   │   └── blocks.py        # 程式碼、表格、樹狀圖區塊
+│   ├── render/
+│   │   └── html.py          # HTML 渲染器
+│   └── templates/
+│       └── template.html    # Jinja2 模板
+├── tools/
+│   └── migrate_syntax.py    # 舊語法轉換工具
+├── docs/
+│   ├── 格式參考.md           # 格式說明（本身也是一份簡報）
+│   └── 路徑使用指南.md
+├── examples/
+│   └── example.md           # 範例 Markdown 投影片
+├── tests/                   # pytest 測試與 golden 檔
+├── launcher.py              # 中文互動式啟動器
+├── start.bat                # Windows 雙擊啟動
+├── requirements.txt         # 執行依賴
+└── requirements-dev.txt     # 開發依賴（pytest）
 ```
 
 ## 安裝
@@ -25,167 +42,137 @@ pip install -r requirements.txt
 
 ## 使用方式
 
+最簡單的方式是雙擊 `start.bat`（或執行 `python launcher.py`），依選單操作。
+
+命令列使用時，先讓 Python 找得到 `src/` 下的套件：
+
+```bash
+# macOS / Linux
+export PYTHONPATH=src
+# Windows（cmd）
+set PYTHONPATH=src
+```
+
 ### 1. 建立新專案
 
 ```bash
-python presentation_generator.py new -o my_presentation.json --title "我的簡報"
+python -m briefgen new -o my_presentation.json --title "我的簡報"
 ```
 
 ### 2. 從 Markdown 生成簡報
 
 ```bash
-python presentation_generator.py build -i example.md -o output.html
+python -m briefgen build -i examples/example.md -o output.html
 ```
 
 ### 3. 從 JSON 專案生成簡報
 
 ```bash
-python presentation_generator.py build -i my_presentation.json -o output.html
+python -m briefgen build -i my_presentation.json -o output.html
 ```
 
 ### 4. 匯出個別投影片 HTML
 
 ```bash
-python presentation_generator.py export-slides -i example.md -o slides_output/
+python -m briefgen export-slides -i examples/example.md -o slides_output/
 ```
 
 ### 5. 使用自訂模板
 
 ```bash
-python presentation_generator.py build -i example.md -o output.html --template custom_template.html
+python -m briefgen build -i examples/example.md -o output.html --template custom_template.html
 ```
 
 ## Markdown 格式說明
 
-### 投影片分隔
-
-使用 `---` 分隔不同投影片：
+只在行首寫一個 `<...>`，裡面用空白分隔多個格式，不寫結尾：
 
 ```markdown
-# 第一張投影片
-內容...
-
----
-
-# 第二張投影片
-內容...
+<pivot=c size=6 color=orange>置中的大標題
+<b i>粗體+斜體
+第一段文字
+<cont color=red>接在同一行的紅色文字
 ```
 
-### 標題
+完整說明見 [docs/格式參考.md](docs/格式參考.md)。它本身也是一份簡報，可以直接生成來看效果：
 
-- `# 標題` - 主標題
-- `## 副標題` - 副標題
-
-### 文字格式
-
-基本格式寫在 `<>` 內：
-
-```markdown
-<size<5>>大字體文字
-<color<purple>>紫色文字
-<b>粗體
-<i>斜體
-<u>底線
-<s>刪除線
+```bash
+python -m briefgen build -i docs/格式參考.md -o 格式參考.html
 ```
 
-### 特殊區塊
+格式寫錯時（名稱不認識、值不合法），該行會照原樣顯示，並在 stderr 印出 `檔名:行號: 訊息`。
 
-```markdown
-<ct>子標題
-<imp>重要訊息區塊
-<pivot<c>>置中對齊
-<tab<2>>縮排 2 單位
-<link<網址>>超連結
+## 舊簡報如何用 migrate_syntax.py 轉換
+
+舊版語法（`<size<5>><b>`、`[width<400px>]`、`[id<2> p<1>]`）已廢除，請用轉換工具改寫：
+
+```bash
+python tools/migrate_syntax.py 舊簡報.md -o 新簡報.md
+# 或直接覆寫
+python tools/migrate_syntax.py 舊簡報.md --in-place
 ```
 
-### 程式碼區塊
+| 舊語法 | 新語法 |
+|---|---|
+| `<size<5>><color<red>><b>文字` | `<size=5 color=red b>文字` |
+| `<link<https://a.com>>文字` | `<link=https://a.com>文字` |
+| `[width<400px>]` | `[width=400px]` |
+| `[id<2> p<1> o<1/2>]` | `[id=2 p=1]` |
 
-使用標準 Markdown 語法：
+轉換報告會印在 stderr，列出被移除或需要留意的內容，例如：
 
-````markdown
-```py
-def hello():
-    print("Hello")
-```
-````
+- 舊版沒有作用、新語法也不接受的格式（如 `size<9>`、未知名稱）會被移除
+- 樹節點的 `o<...>` 與 `imp` 已廢除，會被移除
+- 段落行首的 `[注意]` 這類方括號，舊版會被隱藏，新語法會顯示為文字
 
-支援語言：`c`, `cpp`, `cs`, `py`, `js`, `java`
-
-可加入寬度設定：
-
-````markdown
-```py
-[width<full>]
-程式碼...
-```
-````
-
-### 表格
-
-```markdown
-[table]
-[width<400px>]
-<imp>標題1
-[c]<imp>標題2
-資料1
-[c]資料2
-[/table]
-```
-
-### 樹狀圖
-
-```markdown
-[tree]
-[width<full>]
-[id<1>] 根節點
-[id<2> p<1>] 子節點
-[id<3> p<1>] 另一子節點
-[/tree]
-```
+轉換後建議生成一次，確認沒有格式警告。
 
 ## 模組化設計
 
-### slide_model.py
+### model.py
 定義資料結構：
 - `Slide` - 單張投影片
 - `Presentation` - 簡報專案
 - `SlideTheme` - 主題配色
 
-### markdown_parser.py
-解析 Markdown 內容，提取：
+### parsing/slides.py
+以 `---` 切割投影片，取出 `#` 標題與 `##` 副標題，並記錄每行在原始檔的行號（供警告使用）。
+
+### parsing/blocks.py
+提取特殊區塊：
 - 程式碼區塊
 - 表格區塊
 - 樹狀圖區塊
-- 行內格式
 
-### syntax_highlighter.py
+### tags.py
+解析行首格式 `<...>`，段落、表格儲存格、樹節點共用同一套規則。
+
+### highlighter.py
 程式碼語法高亮：
 - 關鍵字辨識
 - 字串/註解/數字上色
 - 多語言支援
 
-### html_renderer.py
+### render/html.py
 渲染投影片為 HTML：
-- 解析格式標記
+- 套用格式
 - 渲染區塊內容
-- 生成樣式
+- 處理 cont 接續
 
-### presentation_generator.py
-主程式：
+### generator.py / cli.py
 - 載入/儲存專案
-- 解析 Markdown
 - 組合 Jinja2 模板
-- 生成最終 HTML
+- 生成最終 HTML、印出格式警告
+- 命令列介面
 
 ## 進階功能
 
 ### 自訂主題
 
-修改 `slide_model.py` 中的 `SlideTheme` 預設值，或在程式中動態設定：
+修改 `src/briefgen/model.py` 中的 `SlideTheme` 預設值，或在程式中動態設定：
 
 ```python
-from slide_model import Presentation, SlideTheme
+from briefgen.model import Presentation, SlideTheme
 
 presentation = Presentation()
 presentation.theme = SlideTheme(
@@ -201,13 +188,22 @@ presentation.theme = SlideTheme(
 ### 批次處理
 
 ```python
-from presentation_generator import PresentationGenerator
+from briefgen.generator import PresentationGenerator
 
 gen = PresentationGenerator()
 gen.load_from_markdown('slides.md')
 gen.generate_html('output.html')
 gen.generate_individual_slides('slides/')
 ```
+
+## 測試
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+`tests/golden/` 存放預期的 HTML 輸出，生成結果必須與它逐字相同。
 
 ## 鍵盤操作
 
@@ -230,7 +226,7 @@ gen.generate_individual_slides('slides/')
 
 ### 保留功能
 
-- 所有格式標記（`<size<>>`, `<color<>>`, 等）
+- 所有格式（語法改為 `<size=5 color=red>`，舊檔請見「舊簡報如何用 migrate_syntax.py 轉換」）
 - 程式碼語法高亮
 - 表格與樹狀圖
 - 主題配色系統
