@@ -2,9 +2,48 @@
 
 Markdown 轉 HTML 簡報生成器。
 
+## 常用指令
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest                                    # pyproject.toml 已設定 pythonpath=src,tools
+PYTHONPATH=src python -m briefgen build -i examples/example.md -o out.html
+python tools/migrate_syntax.py 舊.md -o 新.md
+```
+
 ## 架構
 
-（重整完成後補上）
+原始碼在 `src/briefgen/`，資料流：
+
+1. `parsing/slides.py`：以單獨一行 `---` 切割投影片，取出 `# ` 標題與 `## ` 副標題，
+   `Slide.source_lines` 記錄每個內容行在原始檔的行號（不寫入 JSON）
+2. `parsing/blocks.py`：`MarkdownParser.parse()` 抽出程式碼、`[table]`、`[tree]` 區塊，
+   以 `[BLOCK_REF:key]` 佔位，並回傳每行的原始行索引；樹節點文字在這裡解析
+3. `tags.py`：`parse_format()` 是唯一的行首格式解析，段落、儲存格、樹節點共用；
+   回傳 styles 與區塊層級欄位，錯誤不丟例外，而是放進 `warnings`
+4. `render/html.py`：`HTMLRenderer` 渲染段落（含 cont 接續）與區塊，
+   警告依行號排序後交給 `warn` callback
+5. `generator.py`：`PresentationGenerator` 載入 Markdown/JSON、套用
+   `templates/template.html`，把警告以 `檔名:行號: 訊息` 印到 stderr
+6. `cli.py` / `__main__.py`：`python -m briefgen new|build|export-slides`
+
+其他：
+- `launcher.py`、`start.bat` 留在根目錄，以 `python -m briefgen` 並設定 `PYTHONPATH=src` 呼叫
+- `tools/migrate_syntax.py`：舊語法轉換，已是新語法的內容不變（可重複執行）
+- `docs/格式參考.md` 是唯一的格式說明，本身也是簡報；`examples/example.md` 是範例
+
+## 測試
+
+- `tests/golden/*.html` 是 `tests/fixtures/new/*.md` 的預期輸出，必須逐字相同；
+  每份 fixture 預期的警告列在 `tests/test_golden.py` 的 `EXPECTED_WARNINGS`
+- `tests/fixtures/old/` 是舊語法版本，轉換後必須等於 `fixtures/new/`
+- 改變輸出時，先列出 golden diff 給使用者確認，再重新產生 golden
+- `docs/格式參考.md` 與 `examples/example.md` 生成時不可有警告
+
+## 限制
+
+- 不改視覺樣式（inline style 字串）、不加 emoji
+- 每個 edge case 只測一件事
 
 ## 格式語法（設計意圖，優先於現有程式行為）
 
