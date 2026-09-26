@@ -11,6 +11,7 @@ from jinja2 import Template
 
 from briefgen.model import Presentation, Slide, SlideTheme
 from briefgen.render.html import HTMLRenderer
+from briefgen.parsing.slides import parse_markdown_slides
 
 
 class PresentationGenerator:
@@ -36,55 +37,8 @@ class PresentationGenerator:
             content = f.read()
         
         # 解析 Markdown 檔案
-        slides = self._parse_markdown_file(content)
+        slides = parse_markdown_slides(content)
         self.presentation.slides = slides
-    
-    def _parse_markdown_file(self, content: str) -> list[Slide]:
-        """解析 Markdown 檔案內容"""
-        slides = []
-        
-        # 分割投影片（以 --- 或 # 開頭的標題為分隔）
-        parts = content.split('\n---\n')
-        
-        for part in parts:
-            part = part.strip()
-            if not part:
-                continue
-            
-            lines = part.split('\n')
-            title = ""
-            subtitle = ""
-            content_lines = []
-            
-            # 解析標題和內容
-            i = 0
-            while i < len(lines):
-                line = lines[i].strip()
-                
-                # 主標題 (# 開頭)
-                if line.startswith('# '):
-                    title = line[2:].strip()
-                    i += 1
-                    continue
-                
-                # 副標題 (## 開頭)
-                if line.startswith('## '):
-                    subtitle = line[3:].strip()
-                    i += 1
-                    continue
-                
-                # 其他內容
-                content_lines.append(lines[i])
-                i += 1
-            
-            slide = Slide(
-                title=title,
-                subtitle=subtitle,
-                content='\n'.join(content_lines).strip()
-            )
-            slides.append(slide)
-        
-        return slides
     
     def generate_html(self, output_path: str, template_path: Optional[str] = None) -> None:
         """生成 HTML 簡報"""
