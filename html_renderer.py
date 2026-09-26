@@ -9,6 +9,7 @@ from typing import Dict, List, Any
 from markdown_parser import MarkdownParser
 from briefgen.highlighter import SyntaxHighlighter
 from briefgen.model import Slide, SlideTheme
+from briefgen.tags import parse_line_format, parse_cell_format
 
 
 class HTMLRenderer:
@@ -80,137 +81,10 @@ class HTMLRenderer:
         html_lines = []
         
         for line in lines:
-            parsed = self._parse_line_format(line)
+            parsed = parse_line_format(line)
             html_lines.append(self._render_formatted_line(parsed))
         
         return ''.join(html_lines)
-    
-    def _parse_line_format(self, line: str) -> Dict[str, Any]:
-        """解析行的格式標記（支援連續多個標記）"""
-        result = {
-            'text': line,
-            'cont': False,
-            'is_subtitle': False,
-            'is_important': False,
-            'indent': 0,
-            'align': None,
-            'link': None,
-            'image': None,
-            'styles': {},
-        }
-        
-        text = line.strip()
-        if not text:
-            return result
-        
-        # 持續解析所有開頭的格式標記
-        while text.startswith('<') or text.startswith('['):
-            start_char = text[0]
-            end_char = '>' if start_char == '<' else ']'
-            
-            # 找到這個標記的結束位置
-            depth = 0
-            end = -1
-            
-            for i, c in enumerate(text):
-                if c == start_char:
-                    depth += 1
-                elif c == end_char:
-                    depth -= 1
-                    if depth == 0:
-                        end = i
-                        break
-            
-            if end == -1:
-                break  # 沒找到匹配的結束符，停止解析
-            
-            # 提取這個標記的內容
-            fmt = text[1:end]
-            text = text[end+1:].strip()  # 剩餘文本
-            
-            # 解析這個標記
-            self._apply_format_token(fmt, result)
-        
-        result['text'] = text
-        return result
-    
-    def _apply_format_token(self, fmt: str, result: Dict[str, Any]) -> None:
-        """應用單個格式標記到結果"""
-        # 解析格式標記中的tokens
-        tokens = re.split(r'[<>\s]+', fmt)
-        tokens = [t for t in tokens if t]  # 移除空字串
-        
-        # cont
-        if 'cont' in tokens:
-            result['cont'] = True
-        
-        # ct (content title/subtitle)
-        if 'ct' in tokens:
-            result['is_subtitle'] = True
-        
-        # imp (important)
-        if 'imp' in tokens:
-            result['is_important'] = True
-        
-        # 縮排
-        tab_match = re.search(r'tab<(\d+)>', fmt)
-        if tab_match:
-            result['indent'] = int(tab_match.group(1))
-        
-        # 對齊
-        pivot_match = re.search(r'pivot<([lcr])>', fmt)
-        if pivot_match:
-            pivot_map = {'l': 'left', 'c': 'center', 'r': 'right'}
-            result['align'] = pivot_map.get(pivot_match.group(1))
-        
-        # 超連結
-        link_match = re.search(r'link<([^>]+)>', fmt)
-        if link_match:
-            result['link'] = link_match.group(1)
-        
-        # 圖片
-        img_match = re.search(r'img<([^,]+),([^,]+),([^>]+)>', fmt)
-        if img_match:
-            result['image'] = {
-                'url': img_match.group(1),
-                'width': img_match.group(2),
-                'height': img_match.group(3),
-            }
-        
-        # 字體大小
-        size_match = re.search(r'size<(\d)>', fmt)
-        if size_match:
-            size_map = {
-                '1': '0.7em', '2': '0.85em', '3': '1em',
-                '4': '1.2em', '5': '1.5em', '6': '2em', '7': '2.5em'
-            }
-            size = size_match.group(1)
-            if size in size_map:
-                result['styles']['font-size'] = size_map[size]
-        
-        # 顏色
-        color_match = re.search(r'color<([^>]+)>', fmt)
-        if color_match:
-            result['styles']['color'] = self._normalize_color(color_match.group(1))
-        
-        # 粗體
-        if 'b' in tokens or 'bold' in tokens:
-            result['styles']['font-weight'] = 'bold'
-        
-        # 斜體
-        if 'i' in tokens or 'italic' in tokens:
-            result['styles']['font-style'] = 'italic'
-        
-        # 底線和刪除線
-        underline = 'u' in tokens or 'underline' in tokens
-        strike = 's' in tokens or 'strike' in tokens
-        
-        if underline and strike:
-            result['styles']['text-decoration'] = 'underline line-through'
-        elif underline:
-            result['styles']['text-decoration'] = 'underline'
-        elif strike:
-            result['styles']['text-decoration'] = 'line-through'
     
     def _render_formatted_line(self, parsed: Dict[str, Any]) -> str:
         """渲染格式化的行"""
@@ -344,7 +218,7 @@ class HTMLRenderer:
         for row_idx, row in enumerate(data):
             cells_html = []
             for cell in row:
-                parsed = self._parse_cell_format(cell)
+                parsed = parse_cell_format(cell)
                 
                 # 第一行或important的樣式
                 if row_idx == 0 or parsed['imp']:
@@ -437,87 +311,6 @@ class HTMLRenderer:
         
         html += '</div>'
         return html
-    
-    def _parse_cell_format(self, text: str) -> Dict[str, Any]:
-        """解析表格儲存格格式"""
-        result = {
-            'text': text,
-            'imp': False,
-            'styles': {},
-        }
-        
-        stripped = text.strip()
-        if not stripped.startswith('<'):
-            return result
-        
-        # 找到格式區塊結束位置
-        depth = 0
-        end = -1
-        for i, c in enumerate(stripped):
-            if c == '<':
-                depth += 1
-            elif c == '>':
-                depth -= 1
-            if depth == 0:
-                end = i
-                break
-        
-        if end == -1:
-            return result
-        
-        fmt = stripped[1:end]
-        result['text'] = stripped[end+1:]
-        
-        if 'imp' in fmt.split():
-            result['imp'] = True
-        
-        # 字體大小
-        size_match = re.search(r'size<(\d)>', fmt)
-        if size_match:
-            size_map = {
-                '1': '0.7em', '2': '0.85em', '3': '1em',
-                '4': '1.2em', '5': '1.5em', '6': '2em', '7': '2.5em'
-            }
-            size = size_match.group(1)
-            if size in size_map:
-                result['styles']['font-size'] = size_map[size]
-        
-        # 顏色
-        color_match = re.search(r'color<([^>]+)>', fmt)
-        if color_match:
-            result['styles']['color'] = self._normalize_color(color_match.group(1))
-        
-        # 粗體
-        if 'b' in fmt.split() or 'bold' in fmt.split():
-            result['styles']['font-weight'] = 'bold'
-        
-        # 斜體
-        if 'i' in fmt.split() or 'italic' in fmt.split():
-            result['styles']['font-style'] = 'italic'
-        
-        # 底線和刪除線
-        underline = 'u' in fmt.split() or 'underline' in fmt.split()
-        strike = 's' in fmt.split() or 'strike' in fmt.split()
-        
-        if underline and strike:
-            result['styles']['text-decoration'] = 'underline line-through'
-        elif underline:
-            result['styles']['text-decoration'] = 'underline'
-        elif strike:
-            result['styles']['text-decoration'] = 'line-through'
-        
-        return result
-    
-    def _normalize_color(self, color: str) -> str:
-        """標準化顏色值"""
-        color_map = {
-            'black': '#000', 'white': '#fff',
-            'red': '#f00', 'green': '#008000', 'blue': '#00f',
-            'yellow': '#ff0', 'cyan': '#0ff',
-            'orange': '#ffa500', 'purple': '#800080',
-            'pink': '#ffc0cb', 'gray': '#808080',
-        }
-        return color_map.get(color.strip().lower(), color)
     
     def _escape_html(self, text: str) -> str:
         """HTML 轉義"""
