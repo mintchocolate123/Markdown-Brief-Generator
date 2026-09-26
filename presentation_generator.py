@@ -10,7 +10,7 @@ from typing import Optional
 from jinja2 import Template
 
 from briefgen.model import Presentation, Slide, SlideTheme
-from html_renderer import HTMLRenderer
+from briefgen.render.html import HTMLRenderer
 
 
 class PresentationGenerator:
@@ -90,7 +90,7 @@ class PresentationGenerator:
         """生成 HTML 簡報"""
         # 使用預設模板或自訂模板
         if template_path is None:
-            template_path = Path(__file__).parent / 'template.html'
+            template_path = Path(__file__).parent / 'src' / 'briefgen' / 'templates' / 'template.html'
         
         with open(template_path, 'r', encoding='utf-8') as f:
             template_content = f.read()

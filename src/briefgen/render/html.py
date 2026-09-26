@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-html_renderer.py - 將投影片內容渲染為 HTML
+html.py - 將投影片內容渲染為 HTML
 """
 
 import re
