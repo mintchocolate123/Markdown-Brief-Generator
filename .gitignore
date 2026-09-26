@@ -3,4 +3,5 @@ __pycache__/
 *_output.html
 test*.html
 .vscode/
-Brief/
+Brief/.venv/
+.pytest_cache/

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡報</title>
+    <meta name="generator" content="PresentationGenerator">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 20px 100px;
+        }
+        
+        .slide {
+            display: none;
+            animation: fadeIn .5s;
+        }
+        
+        .slide.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-header {
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(233, 69, 96, .3);
+        }
+        
+        .slide-header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .slide-header .subtitle {
+            font-size: 1.2em;
+            opacity: .9;
+        }
+        
+        .slide-content {
+            background: rgba(255, 255, 255, .1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            line-height: 2;
+            font-size: 1.15em;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+        }
+        
+        .slide-content > div {
+            margin-bottom: 10px;
+        }
+        
+        .slide-content > div:last-child {
+            margin-bottom: 0;
+        }
+        
+        .slide-content a {
+            color: #feca57;
+        }
+        
+        .slide-content a:hover {
+            color: #fff;
+        }
+        
+        .slide-content table tr:nth-child(even) {
+            background: rgba(255, 255, 255, .05);
+        }
+        
+        .slide-content table tr:hover {
+            background: rgba(255, 255, 255, .1);
+        }
+        
+        .navigation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 52, 96, .95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, .3);
+        }
+        
+        .nav-btn {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: #fff;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all .3s;
+            font-weight: bold;
+        }
+        
+        .nav-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, .4);
+        }
+        
+        .nav-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .page-indicator {
+            background: rgba(255, 255, 255, .1);
+            color: #feca57;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #e94560, #feca57);
+            transition: width .3s;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    <div class="container">
+        
+        <div class="slide" id="slide1"><div class="slide-header"><h1>歡迎使用簡報生成器</h1><p class="subtitle">這是一個現代化的 HTML 簡報工具</p></div><div class="slide-content"><div>這是第一張投影片的內容。</div>
+<div style="font-size:1.5em">你可以調整文字大小</div><div style="color:#800080">也可以改變顏色</div></div></div>
+        
+        <div class="slide" id="slide2"><div class="slide-header"><h1>Markdown 格式支援</h1><p class="subtitle">使用標準 Markdown 語法</p></div><div class="slide-content"><div>支援的功能：</div><div>- 標題層級</div><div>- 段落分隔</div><div>- 特殊格式標記</div>
+<div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px"><span style="font-size:1.4em;font-weight:bold;color:#feca57;border-bottom:2px solid #feca57;padding-bottom:5px;margin-bottom:10px;display:inline-block">子標題範例</span></div>
+<div style="text-align:center;border:2px solid #feca57;border-radius:10px;padding:15px 20px;background:rgba(254,202,87,.1);margin:10px 0">這是重要訊息區塊</div></div></div>
+        
+        <div class="slide" id="slide3"><div class="slide-header"><h1>程式碼展示</h1><p class="subtitle">支援多種語言的語法高亮</p></div><div class="slide-content"><div style="background:#282a36;padding:15px 18px;border-radius:10px;font-family:Consolas,Monaco,monospace;font-size:0.9em;display:block;margin:8px 0;border-left:4px solid #feca57;overflow-x:auto;position:relative;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><span style="background:#e94560;color:#fff;padding:3px 10px;border-radius:4px;font-size:0.7em;font-weight:bold;">PY</span><button onclick="copyCode('e06cf299')" id="copyBtne06cf299" style="background:#4ecdc4;color:#fff;border:none;padding:5px 12px;border-radius:4px;font-size:0.7em;cursor:pointer;font-weight:bold;transition:all 0.3s;">複製</button></div><div style="display:none;" id="codee06cf299">def hello_world():
+    print(&quot;Hello, World!&quot;)
+    return True
+
+if __name__ == &quot;__main__&quot;:
+    hello_world()</div><pre style="margin:0;white-space:pre-wrap;word-break:break-all;line-height:1.6;color:#fff;"><span style="color:#ff79c6;font-weight:bold">def</span> hello_world():
+    <span style="color:#ff79c6;font-weight:bold">print</span>(<span style="color:#f1fa8c">"Hello, World!"</span>)
+    <span style="color:#ff79c6;font-weight:bold">return</span> <span style="color:#ff79c6;font-weight:bold">True</span>
+
+<span style="color:#ff79c6;font-weight:bold">if</span> __name__ == <span style="color:#f1fa8c">"__main__"</span>:
+    hello_world()</pre></div>
+<div>支援的語言：C, C++, C#, Python, JavaScript, Java</div></div></div>
+        
+        <div class="slide" id="slide4"><div class="slide-header"><h1>表格功能</h1><p class="subtitle">結構化資料展示</p></div><div class="slide-content"><div><table style="border-collapse:collapse;background:rgba(255,255,255,.1);border-radius:10px;overflow:hidden;margin:5px 0;min-width:400px;"><tr><td style="padding:10px 15px;border:1px solid rgba(255,255,255,.2);text-align:center;background:linear-gradient(90deg,#e9456088,#ff6b6b88);font-weight:bold;">項目</td><td style="padding:10px 15px;border:1px solid rgba(255,255,255,.2);text-align:center;background:linear-gradient(90deg,#e9456088,#ff6b6b88);font-weight:bold;">說明</td></tr><tr><td style="padding:10px 15px;border:1px solid rgba(255,255,255,.2);text-align:center;">Python</td><td style="padding:10px 15px;border:1px solid rgba(255,255,255,.2);text-align:center;">簡潔易學的程式語言</td></tr><tr><td style="padding:10px 15px;border:1px solid rgba(255,255,255,.2);text-align:center;">JavaScript</td><td style="padding:10px 15px;border:1px solid rgba(255,255,255,.2);text-align:center;">網頁開發必備</td></tr><tr><td style="padding:10px 15px;border:1px solid rgba(255,255,255,.2);text-align:center;">C++</td><td style="padding:10px 15px;border:1px solid rgba(255,255,255,.2);text-align:center;">高效能系統開發</td></tr></table></div></div></div>
+        
+        <div class="slide" id="slide5"><div class="slide-header"><h1>樹狀結構</h1><p class="subtitle">階層關係展示</p></div><div class="slide-content"><div style="width:100%;"><div style="display:flex;flex-direction:column;align-items:center;margin:10px 0;"><div style="display:flex;flex-direction:column;align-items:center;"><div style="background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;display:inline-block;margin:5px;border:2px solid rgba(255,255,255,.3);">程式語言</div><div style="width:2px;height:15px;background:rgba(255,255,255,.4)"></div><div style="height:2px;background:rgba(255,255,255,.4);width:80%;max-width:200px"></div><div style="display:flex;gap:20px"><div style="display:flex;flex-direction:column;align-items:center"><div style="width:2px;height:15px;background:rgba(255,255,255,.4)"></div><div style="display:flex;flex-direction:column;align-items:center;"><div style="background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;display:inline-block;margin:5px;border:2px solid rgba(255,255,255,.3);">編譯型語言</div></div></div><div style="display:flex;flex-direction:column;align-items:center"><div style="width:2px;height:15px;background:rgba(255,255,255,.4)"></div><div style="display:flex;flex-direction:column;align-items:center;"><div style="background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;display:inline-block;margin:5px;border:2px solid rgba(255,255,255,.3);">直譯型語言</div></div></div></div></div></div></div></div></div>
+        
+        <div class="slide" id="slide6"><div class="slide-header"><h1>進階格式</h1><p class="subtitle">文字樣式與對齊</p></div><div class="slide-content"><div style="text-align:center;font-size:2em;color:#ffa500">置中大標題</div>
+<div style="margin-left:4em">縮排文字範例</div>
+<div style="font-weight:bold">粗體文字</div><div style="font-style:italic">斜體文字</div><div style="text-decoration:underline">底線文字</div><div style="text-decoration:line-through">刪除線文字</div>
+<div><a href="https://github.com" target="_blank" style="color:#feca57;text-decoration:underline;">點擊連結</a></div></div></div>
+        
+        <div class="slide" id="slide7"><div class="slide-header"><h1>完成</h1><p class="subtitle">感謝觀看</p></div><div class="slide-content"><div style="text-align:center;font-size:1.5em;color:#0ff">簡報結束</div></div></div>
+        
+    </div>
+    
+    <div class="navigation">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">◀ 上一張</button>
+        <div class="page-indicator" id="pageIndicator">1 / 7</div>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">下一張 ▶</button>
+    </div>
+    
+    <script>
+        let currentIndex = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            document.getElementById('pageIndicator').textContent = `${index + 1} / ${totalSlides}`;
+            document.getElementById('prevBtn').disabled = (index === 0);
+            document.getElementById('nextBtn').disabled = (index === totalSlides - 1);
+            
+            const progress = ((index + 1) / totalSlides) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            
+            window.scrollTo(0, 0);
+        }
+        
+        function changeSlide(direction) {
+            currentIndex = Math.max(0, Math.min(totalSlides - 1, currentIndex + direction));
+            showSlide(currentIndex);
+        }
+        
+        function copyCode(codeId) {
+            const codeElement = document.getElementById('code' + codeId);
+            const btn = document.getElementById('copyBtn' + codeId);
+            
+            if (!codeElement) return;
+            
+            // 取得原始程式碼（解碼 HTML 實體）
+            const code = codeElement.textContent;
+            
+            // 複製到剪貼簿
+            navigator.clipboard.writeText(code).then(() => {
+                // 成功提示
+                const originalText = btn.textContent;
+                btn.textContent = '已複製';
+                btn.style.background = '#00d4aa';
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#4ecdc4';
+                }, 2000);
+            }).catch(err => {
+                // 失敗提示
+                console.error('複製失敗:', err);
+                btn.textContent = '複製失敗';
+                btn.style.background = '#ff6b6b';
+                
+                setTimeout(() => {
+                    btn.textContent = '複製';
+                    btn.style.background = '#4ecdc4';
+                }, 2000);
+            });
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft') {
+                changeSlide(-1);
+            }
+        });
+        
+        showSlide(0);
+    </script>
+</body>
+</html>
