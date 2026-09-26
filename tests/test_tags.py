@@ -2,7 +2,7 @@
 
 import pytest
 
-from briefgen.tags import parse_format
+from briefgen.tags import normalize_color, parse_format
 
 
 def fmt(line):
@@ -156,3 +156,10 @@ def test_escape_after_leading_whitespace():
 
 def test_backslash_elsewhere_is_kept():
     assert fmt('a\\<b')['text'] == 'a\\<b'
+
+
+# --- 顏色 --------------------------------------------------------------------
+
+def test_normalize_color():
+    assert normalize_color(' Purple ') == '#800080'
+    assert normalize_color('#123') == '#123'
