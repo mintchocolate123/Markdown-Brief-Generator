@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from presentation_generator import PresentationGenerator
+from briefgen.generator import PresentationGenerator
 
 ROOT = Path(__file__).resolve().parent.parent
 GOLDEN_DIR = ROOT / 'tests' / 'golden'

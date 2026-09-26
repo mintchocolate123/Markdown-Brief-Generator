@@ -10,6 +10,9 @@ import subprocess
 from pathlib import Path
 
 
+SRC_DIR = Path(__file__).resolve().parent / 'src'
+
+
 def clear_screen():
     """清除螢幕"""
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -24,10 +27,12 @@ def get_absolute_path(path_str):
         return Path.cwd() / path
 
 
-def run_command(cmd):
-    """執行命令"""
+def run_generator(*args):
+    """以 python -m briefgen 執行生成器"""
+    env = os.environ.copy()
+    env['PYTHONPATH'] = os.pathsep.join(filter(None, [str(SRC_DIR), env.get('PYTHONPATH')]))
     try:
-        result = subprocess.run(cmd, shell=True, check=True)
+        result = subprocess.run([sys.executable, '-m', 'briefgen', *args], env=env, check=True)
         return result.returncode == 0
     except subprocess.CalledProcessError:
         return False
@@ -82,10 +87,7 @@ def build_from_markdown():
     print(f"來源：{input_path}")
     print(f"輸出：{output_path}\n")
     
-    script_dir = Path(__file__).parent
-    cmd = f'python "{script_dir}/presentation_generator.py" build -i "{input_path}" -o "{output_path}"'
-    
-    if run_command(cmd):
+    if run_generator('build', '-i', str(input_path), '-o', str(output_path)):
         print(f"\n✓ 完成！")
         if input("\n開啟簡報？(y/n): ").strip().lower() == 'y':
             open_file(output_path)
@@ -114,9 +116,7 @@ def generate_example():
     
     print(f"輸出：{output}\n")
     
-    cmd = f'python "{script_dir}/presentation_generator.py" build -i "{example}" -o "{output}" --title "範例"'
-    
-    if run_command(cmd):
+    if run_generator('build', '-i', str(example), '-o', str(output), '--title', '範例'):
         print(f"\n✓ 完成！")
         if input("\n開啟？(y/n): ").strip().lower() == 'y':
             open_file(output)

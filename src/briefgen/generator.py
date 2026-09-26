@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-presentation_generator.py - 簡報生成器主程式
+generator.py - 簡報生成器
 """
 
 import json
@@ -44,7 +44,7 @@ class PresentationGenerator:
         """生成 HTML 簡報"""
         # 使用預設模板或自訂模板
         if template_path is None:
-            template_path = Path(__file__).parent / 'src' / 'briefgen' / 'templates' / 'template.html'
+            template_path = Path(__file__).parent / 'templates' / 'template.html'
         
         with open(template_path, 'r', encoding='utf-8') as f:
             template_content = f.read()
@@ -97,73 +97,3 @@ class PresentationGenerator:
     def move_slide(self, from_index: int, to_index: int) -> None:
         """移動投影片"""
         self.presentation.move_slide(from_index, to_index)
-
-
-def main():
-    """命令列介面"""
-    import argparse
-    
-    parser = argparse.ArgumentParser(description='HTML 簡報生成器')
-    parser.add_argument('command', choices=['new', 'build', 'export-slides'],
-                        help='指令：new (新建), build (生成), export-slides (匯出個別投影片)')
-    parser.add_argument('-i', '--input', help='輸入檔案 (JSON 或 Markdown)')
-    parser.add_argument('-o', '--output', help='輸出檔案或目錄')
-    parser.add_argument('-t', '--title', default='簡報', help='簡報標題')
-    parser.add_argument('--template', help='自訂模板路徑')
-    
-    args = parser.parse_args()
-    
-    gen = PresentationGenerator()
-    
-    if args.command == 'new':
-        # 建立新專案
-        gen.presentation.title = args.title
-        gen.add_slide(title="歡迎", subtitle="這是第一張投影片", content="開始你的簡報內容...")
-        
-        output = args.output or 'presentation.json'
-        gen.save_to_json(output)
-        print(f"✓ 已建立新專案: {output}")
-    
-    elif args.command == 'build':
-        if not args.input:
-            print("錯誤：請指定輸入檔案 (-i)")
-            return
-        
-        # 載入專案
-        if args.input.endswith('.json'):
-            gen.load_from_json(args.input)
-        elif args.input.endswith('.md'):
-            gen.load_from_markdown(args.input)
-            if args.title:
-                gen.presentation.title = args.title
-        else:
-            print("錯誤：不支援的檔案格式")
-            return
-        
-        # 生成 HTML
-        output = args.output or 'presentation.html'
-        gen.generate_html(output, args.template)
-        print(f"✓ 已生成簡報: {output}")
-    
-    elif args.command == 'export-slides':
-        if not args.input:
-            print("錯誤：請指定輸入檔案 (-i)")
-            return
-        
-        # 載入專案
-        if args.input.endswith('.json'):
-            gen.load_from_json(args.input)
-        elif args.input.endswith('.md'):
-            gen.load_from_markdown(args.input)
-        else:
-            print("錯誤：不支援的檔案格式")
-            return
-        
-        # 匯出個別投影片
-        output_dir = args.output or 'slides'
-        gen.generate_individual_slides(output_dir)
-        print(f"✓ 已匯出 {len(gen.presentation.slides)} 張投影片到: {output_dir}")
-
-
-if __name__ == '__main__':
-    main()
