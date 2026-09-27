@@ -325,43 +325,49 @@ class HTMLRenderer:
         
         html = '<div style="display:flex;flex-direction:column;align-items:center;margin:10px 0;">'
         
-        for node_idx, node in enumerate(nodes):
-            # 節點樣式
-            node_style = 'background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;display:inline-block;margin:5px;border:2px solid rgba(255,255,255,.3);'
-            
-            # 加入自訂樣式
-            for k, v in node.get('styles', {}).items():
-                node_style += f'{k}:{v};'
-            
-            text = self._escape_html(node.get('text', ''))
-            
-            # 找子節點
-            children = [n for n in node_map.values() if n.get('parent') == node.get('id')]
-            
-            if children:
+        for node in nodes:
+            subtree = self._render_tree_node(node, node_map, set())
+            if self._tree_children(node, node_map):
                 # 有子節點 - 渲染階層結構
-                html += '<div style="display:flex;flex-direction:column;align-items:center;">'
-                html += f'<div style="{node_style}">{text}</div>'
-                html += '<div style="width:2px;height:15px;background:rgba(255,255,255,.4)"></div>'
-                html += '<div style="height:2px;background:rgba(255,255,255,.4);width:80%;max-width:200px"></div>'
-                html += '<div style="display:flex;gap:20px">'
-                
-                for child in children:
-                    html += '<div style="display:flex;flex-direction:column;align-items:center">'
-                    html += '<div style="width:2px;height:15px;background:rgba(255,255,255,.4)"></div>'
-                    
-                    # 子節點樣式
-                    child_style = 'background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;display:inline-block;margin:5px;border:2px solid rgba(255,255,255,.3);'
-                    child_text = self._escape_html(child.get('text', ''))
-                    
-                    html += f'<div style="display:flex;flex-direction:column;align-items:center;"><div style="{child_style}">{child_text}</div></div>'
-                    html += '</div>'
-                
-                html += '</div>'
-                html += '</div>'
+                html += f'<div style="display:flex;flex-direction:column;align-items:center;">{subtree}</div>'
             else:
                 # 無子節點 - 單一節點
-                html += f'<div style="{node_style}">{text}</div>'
+                html += subtree
+        
+        html += '</div>'
+        return html
+    
+    def _tree_children(self, node: Dict, node_map: Dict) -> List[Dict]:
+        """找子節點"""
+        return [n for n in node_map.values() if n.get('parent') == node.get('id')]
+    
+    def _render_tree_node(self, node: Dict, node_map: Dict, ancestors: set) -> str:
+        """渲染節點與它底下任意深度的子樹"""
+        # 節點樣式
+        node_style = 'background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;display:inline-block;margin:5px;border:2px solid rgba(255,255,255,.3);'
+        
+        # 加入自訂樣式
+        for k, v in node.get('styles', {}).items():
+            node_style += f'{k}:{v};'
+        
+        text = self._escape_html(node.get('text', ''))
+        html = f'<div style="{node_style}">{text}</div>'
+        
+        # 父子關係成環時不再往下走
+        path = ancestors | {node.get('id')}
+        children = [child for child in self._tree_children(node, node_map) if child.get('id') not in path]
+        if not children:
+            return html
+        
+        html += '<div style="width:2px;height:15px;background:rgba(255,255,255,.4)"></div>'
+        html += '<div style="height:2px;background:rgba(255,255,255,.4);width:80%;max-width:200px"></div>'
+        html += '<div style="display:flex;gap:20px">'
+        
+        for child in children:
+            html += '<div style="display:flex;flex-direction:column;align-items:center">'
+            html += '<div style="width:2px;height:15px;background:rgba(255,255,255,.4)"></div>'
+            html += f'<div style="display:flex;flex-direction:column;align-items:center;">{self._render_tree_node(child, node_map, path)}</div>'
+            html += '</div>'
         
         html += '</div>'
         return html
