@@ -46,6 +46,8 @@ python tools/migrate_syntax.py 舊.md -o 新.md
 
 - 不改視覺樣式（inline style 字串）、不加 emoji
 - 每個 edge case 只測一件事
+- 終端輸出只用 cp950 可編碼的字元（狀態用 `[OK]`、`[FAIL]`，不用 ✓ ✗），不依賴系統編碼：
+  命令列進入點一開始呼叫 `briefgen.console.use_utf8_output()`（launcher 內有同樣的函式）
 
 ## 格式語法（設計意圖，優先於現有程式行為）
 
