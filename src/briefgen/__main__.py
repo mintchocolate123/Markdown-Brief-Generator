@@ -1,5 +1,7 @@
 """python -m briefgen"""
 
+import sys
+
 from briefgen.cli import main
 
-main()
+sys.exit(main())

@@ -24,7 +24,7 @@ def run(args, cwd, stdin='', stdout=subprocess.PIPE):
     env['PYTHONIOENCODING'] = 'cp950'
     return subprocess.run(
         [sys.executable, *args],
-        cwd=cwd, env=env, input=stdin.encode('utf-8'),
+        cwd=cwd, env=env, input=stdin.encode('cp950'),
         stdout=stdout, stderr=subprocess.PIPE, timeout=60,
     )
 
@@ -51,6 +51,19 @@ def test_launcher_generate_example(work_dir):
     assert result.returncode == 0, result.stderr.decode('utf-8', 'replace')
     assert (work_dir / 'example_output.html').exists()
     assert '完成' in result.stdout.decode('utf-8')
+
+
+def test_launcher_shows_fail_when_build_fails(work_dir):
+    source = work_dir / '不支援 格式.txt'
+    source.write_text('文字', encoding='utf-8')
+    # [1] 從 Markdown 生成 -> 檔案路徑 -> 預設輸出 -> Enter 繼續 -> [0] 結束
+    result = run([str(ROOT / 'launcher.py')], cwd=work_dir, stdin=f'1\n{source}\n\n\n0\n')
+
+    assert result.returncode == 0, result.stderr.decode('utf-8', 'replace')
+    stdout = result.stdout.decode('utf-8')
+    assert '[FAIL] 失敗' in stdout
+    assert '[OK]' not in stdout
+    assert '不支援的檔案格式' in result.stderr.decode('utf-8')
 
 
 def test_python_sources_are_cp950_encodable():
