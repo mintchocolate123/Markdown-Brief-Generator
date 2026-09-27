@@ -18,9 +18,9 @@ DEFAULT_TITLE = '簡報'
 
 
 def markdown_title(slides: list[Slide], filepath: str) -> str:
-    """Markdown 簡報的標題：第一張投影片的 # 標題，其次是檔名（不含副檔名），最後是預設值"""
-    if slides and slides[0].title:
-        return slides[0].title
+    """Markdown 簡報的標題：第一張投影片的 # 標題、## 副標題，其次是檔名（不含副檔名），最後是預設值"""
+    if slides and (slides[0].title or slides[0].subtitle):
+        return slides[0].title or slides[0].subtitle
     return Path(filepath).stem or DEFAULT_TITLE
 
 

@@ -93,3 +93,18 @@ def test_tree_unknown_setting_is_ignored_with_warning():
     body, warnings = render('[tree]\n[id=1 o=1/2] 根\n[/tree]')
     assert '>根</div>' in body
     assert warnings == [(2, '樹節點不認識的設定：o=1/2')]
+
+
+@pytest.mark.parametrize('title, subtitle, header', [
+    ('主', '副', '<h1>主</h1><p class="subtitle">副</p>'),
+    ('主', '', '<h1>主</h1><p class="subtitle"></p>'),
+    ('', '副', '<h1>副</h1><p class="subtitle"></p>'),
+])
+def test_slide_header(title, subtitle, header):
+    html = HTMLRenderer().render_slide(Slide(title=title, subtitle=subtitle, content='x'), 0)
+    assert f'<div class="slide-header">{header}</div>' in html
+
+
+def test_no_header_without_title_and_subtitle():
+    html = HTMLRenderer().render_slide(Slide(content='x'), 0)
+    assert 'slide-header' not in html

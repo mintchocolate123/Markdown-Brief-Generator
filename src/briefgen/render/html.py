@@ -46,9 +46,10 @@ class HTMLRenderer:
         # 組裝投影片 HTML（符合原始格式）
         slide_id = f'slide{index + 1}'
         
-        # 如果有標題就加 slide-header
-        if slide.title:
-            html = f'<div class="slide" id="{slide_id}"><div class="slide-header"><h1>{self._escape_html(slide.title)}</h1><p class="subtitle">{self._escape_html(slide.subtitle) if slide.subtitle else ""}</p></div><div class="slide-content">{content_html}</div></div>'
+        # 有標題或副標題就加 slide-header；只有副標題時放在主標題的位置
+        if slide.title or slide.subtitle:
+            heading, subtitle = (slide.title, slide.subtitle) if slide.title else (slide.subtitle, '')
+            html = f'<div class="slide" id="{slide_id}"><div class="slide-header"><h1>{self._escape_html(heading)}</h1><p class="subtitle">{self._escape_html(subtitle)}</p></div><div class="slide-content">{content_html}</div></div>'
         else:
             html = f'<div class="slide" id="{slide_id}"><div class="slide-content">{content_html}</div></div>'
         

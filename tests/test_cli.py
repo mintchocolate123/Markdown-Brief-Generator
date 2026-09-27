@@ -25,7 +25,7 @@ def html_title(path):
 @pytest.fixture
 def files(tmp_path):
     (tmp_path / 'a.md').write_text(MARKDOWN, encoding='utf-8')
-    (tmp_path / '無標題 投影片.md').write_text('## 只有副標題\n內容\n---\n# 第二張\n', encoding='utf-8')
+    (tmp_path / '無標題 投影片.md').write_text('沒有標題的內容\n---\n# 第二張\n', encoding='utf-8')
     return tmp_path
 
 
@@ -52,13 +52,14 @@ def test_errors_go_to_stderr_with_nonzero_exit(tmp_path, args, message):
     assert err.startswith('[FAIL] 錯誤：') and message in err
 
 
-@pytest.mark.parametrize('first_slide_title, filepath, expected', [
-    ('第一張', 'dir/檔名.md', '第一張'),
-    ('', 'dir/檔名.md', '檔名'),
-    ('', '', '簡報'),
+@pytest.mark.parametrize('title, subtitle, filepath, expected', [
+    ('第一張', '副標題', 'dir/檔名.md', '第一張'),
+    ('', '副標題', 'dir/檔名.md', '副標題'),
+    ('', '', 'dir/檔名.md', '檔名'),
+    ('', '', '', '簡報'),
 ])
-def test_markdown_title_fallback_order(first_slide_title, filepath, expected):
-    slides = [Slide(title=first_slide_title), Slide(title='第二張')]
+def test_markdown_title_fallback_order(title, subtitle, filepath, expected):
+    slides = [Slide(title=title, subtitle=subtitle), Slide(title='第二張')]
     assert markdown_title(slides, filepath) == expected
 
 
@@ -71,3 +72,9 @@ def test_removed_commands_are_rejected(tmp_path, command):
     code, _, err = briefgen(command, cwd=tmp_path)
     assert code == 2
     assert 'invalid choice' in err
+
+
+def test_build_title_from_first_slide_subtitle(tmp_path):
+    (tmp_path / 'b.md').write_text('## 只有副標題\n內容\n', encoding='utf-8')
+    assert briefgen('build', '-i', 'b.md', '-o', 'out.html', cwd=tmp_path)[0] == 0
+    assert html_title(tmp_path / 'out.html') == '只有副標題'
