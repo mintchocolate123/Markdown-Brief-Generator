@@ -6,7 +6,7 @@ generator.py - 簡報生成器
 
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 from jinja2 import Template
 
 from briefgen.model import Presentation, Slide
@@ -30,6 +30,8 @@ class PresentationGenerator:
     def __init__(self, presentation: Optional[Presentation] = None):
         self.presentation = presentation or Presentation()
         self.source_path: Optional[str] = None
+        # 最近一次生成的警告（已含位置），供 watch 模式顯示
+        self.warnings: List[str] = []
     
     def load_from_markdown(self, filepath: str) -> None:
         """從 Markdown 檔案載入投影片"""
@@ -50,10 +52,19 @@ class PresentationGenerator:
         else:
             # 沒有來源檔（程式直接建立的投影片）
             location = f'投影片 {slide_index + 1} 第 {line_index + 1} 行'
-        print(f'{location}: {message}', file=sys.stderr)
+        warning = f'{location}: {message}'
+        self.warnings.append(warning)
+        print(warning, file=sys.stderr)
     
     def generate_html(self, output_path: str, template_path: Optional[str] = None) -> None:
-        """生成 HTML 簡報"""
+        """生成 HTML 簡報並寫入檔案"""
+        html = self.render_html(template_path)
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(html)
+    
+    def render_html(self, template_path: Optional[str] = None) -> str:
+        """生成 HTML 簡報，回傳內容"""
+        self.warnings = []
         # 使用預設模板或自訂模板
         if template_path is None:
             template_path = Path(__file__).parent / 'templates' / 'template.html'
@@ -72,11 +83,7 @@ class PresentationGenerator:
             slide_htmls.append(slide_html)
         
         # 組合最終 HTML
-        html = template.render(
+        return template.render(
             title=self.presentation.title,
             slides=slide_htmls,
         )
-        
-        # 寫入檔案
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(html)

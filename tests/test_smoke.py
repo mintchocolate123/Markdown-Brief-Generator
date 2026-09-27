@@ -2,9 +2,12 @@
 
 import importlib.util
 import os
+import queue
 import shutil
+import signal
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
 import pytest
@@ -65,6 +68,41 @@ def test_launcher_shows_fail_when_build_fails(work_dir):
     assert '[FAIL] 失敗' in stdout
     assert '[OK]' not in stdout
     assert '不支援的檔案格式' in result.stderr.decode('utf-8')
+
+
+@pytest.mark.skipif(sys.platform == 'win32', reason='Windows 無法對子行程送出 Ctrl+C')
+def test_launcher_live_preview_returns_to_menu_on_ctrl_c(work_dir):
+    source = work_dir / '預覽 投影片.md'
+    shutil.copy(ROOT / 'examples' / 'example.md', source)
+    env = os.environ.copy()
+    env.update(PYTHONIOENCODING='cp950', BROWSER='true')  # 不真的開啟瀏覽器
+    launcher = subprocess.Popen(
+        [sys.executable, str(ROOT / 'launcher.py')], cwd=work_dir, env=env,
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True)
+    lines = queue.Queue()
+    threading.Thread(target=lambda: [lines.put(l.decode('utf-8', 'replace')) for l in launcher.stdout],
+                     daemon=True).start()
+    try:
+        # [3] 即時預覽 -> 檔案路徑
+        launcher.stdin.write(f'3\n{source}\n'.encode('cp950'))
+        launcher.stdin.flush()
+        while '預覽網址' not in lines.get(timeout=30):
+            pass
+        assert (work_dir / '預覽 投影片.html').exists()
+
+        os.killpg(launcher.pid, signal.SIGINT)  # 終端機的 Ctrl+C 會送給整個行程群組
+        output = ''
+        while '回到選單' not in output:
+            output += lines.get(timeout=30)
+        assert '[OK] 已結束即時預覽' in output
+
+        # Enter 繼續 -> [0] 結束
+        launcher.stdin.write(b'\n0\n')
+        launcher.stdin.flush()
+        assert launcher.wait(timeout=30) == 0
+    finally:
+        if launcher.poll() is None:
+            os.killpg(launcher.pid, signal.SIGKILL)
 
 
 def test_python_sources_are_cp950_encodable():

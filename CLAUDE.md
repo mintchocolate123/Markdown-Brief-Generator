@@ -26,7 +26,9 @@ python tools/migrate_syntax.py 舊.md -o 新.md
    警告依行號排序後交給 `warn` callback
 5. `generator.py`：`PresentationGenerator` 載入 Markdown、套用
    `templates/template.html`，把警告以 `檔名:行號: 訊息` 印到 stderr
-6. `cli.py` / `__main__.py`：`briefgen build`（`python -m briefgen build`）
+6. `cli.py` / `__main__.py`：`briefgen build` 與 `briefgen watch`（`python -m briefgen ...`）
+7. `watch.py`：即時預覽，輪詢修改時間 + `http.server`；live reload 只插在伺服器回應的頁面，
+   寫到磁碟的 HTML 不含；生成失敗保留上一個成功的版本，只有警告時照常更新並在角落列出
 
 其他：
 - `launcher.py`、`start.bat` 留在根目錄，以 `python -m briefgen` 呼叫；未安裝套件時提示 `pip install -e .`

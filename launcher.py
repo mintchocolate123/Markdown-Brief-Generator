@@ -41,11 +41,11 @@ def open_file(filepath):
     webbrowser.open(path.as_uri())
 
 
-def build_from_markdown():
-    """從 Markdown 生成簡報"""
+def ask_markdown_path(title):
+    """顯示標題並詢問 Markdown 檔案路徑；路徑不合法時回傳 None"""
     clear_screen()
     print("=" * 50)
-    print("    從 Markdown 生成簡報")
+    print(f"    {title}")
     print("=" * 50)
     print()
     print("提示：可以使用完整路徑或相對路徑")
@@ -59,13 +59,22 @@ def build_from_markdown():
     if not input_file:
         print("錯誤：檔案名稱不能為空")
         input("\n按 Enter 繼續...")
-        return
+        return None
     
     input_path = get_absolute_path(input_file)
     if not input_path.exists():
         print(f"錯誤：找不到檔案")
         print(f"尋找路徑：{input_path}")
         input("\n按 Enter 繼續...")
+        return None
+    
+    return input_path
+
+
+def build_from_markdown():
+    """從 Markdown 生成簡報"""
+    input_path = ask_markdown_path("從 Markdown 生成簡報")
+    if input_path is None:
         return
     
     # 預設輸出與輸入同目錄
@@ -88,6 +97,28 @@ def build_from_markdown():
     else:
         print("\n[FAIL] 失敗")
     
+    input("\n按 Enter 繼續...")
+
+
+def live_preview():
+    """即時預覽：存檔後自動重新生成；Ctrl+C 結束並回到選單"""
+    input_path = ask_markdown_path("即時預覽")
+    if input_path is None:
+        return
+    
+    print("\n啟動即時預覽，存檔後瀏覽器會自動更新")
+    print("按 Ctrl+C 結束預覽並回到選單\n", flush=True)
+    process = subprocess.Popen([sys.executable, '-m', 'briefgen', 'watch', str(input_path)])
+    try:
+        process.wait()
+    except KeyboardInterrupt:
+        # Ctrl+C 同時送給 watch，等它自己結束
+        try:
+            process.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            process.kill()
+    
+    print("\n已結束即時預覽，回到選單")
     input("\n按 Enter 繼續...")
 
 
@@ -148,15 +179,18 @@ def main():
         print(f"\n當前目錄: {Path.cwd()}\n")
         print("[1] 從 Markdown 生成簡報")
         print("[2] 生成範例")
+        print("[3] 即時預覽")
         print("[0] 結束")
         print()
         
-        choice = input("選擇 (0-2): ").strip()
+        choice = input("選擇 (0-3): ").strip()
         
         if choice == '1':
             build_from_markdown()
         elif choice == '2':
             generate_example()
+        elif choice == '3':
+            live_preview()
         elif choice == '0':
             clear_screen()
             print("\n謝謝使用！\n")
