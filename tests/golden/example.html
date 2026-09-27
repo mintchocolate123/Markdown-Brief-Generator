@@ -168,6 +168,84 @@
         .blackout.on {
             display: block;
         }
+        
+        @page {
+            size: 13.333in 7.5in;
+            margin: 0;
+        }
+        
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+        html body {
+            background: none;
+        }
+        
+        html .container {
+            max-width: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html .slide {
+            display: block;
+            width: 13.333in;
+            height: 7.5in;
+            padding: 0.35in 0.5in;
+            box-sizing: border-box;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            animation: none;
+            break-after: page;
+        }
+        
+        html .slide:last-child {
+            break-after: auto;
+        }
+        
+        html .navigation,
+        html .progress-bar,
+        html .blackout,
+        html .slide button {
+            display: none !important;
+        }
+        }
+        
+        html.print-layout body {
+            background: none;
+        }
+        
+        html.print-layout .container {
+            max-width: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        html.print-layout .slide {
+            display: block;
+            width: 13.333in;
+            height: 7.5in;
+            padding: 0.35in 0.5in;
+            box-sizing: border-box;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            animation: none;
+            break-after: page;
+        }
+        
+        html.print-layout .slide:last-child {
+            break-after: auto;
+        }
+        
+        html.print-layout .navigation,
+        html.print-layout .progress-bar,
+        html.print-layout .blackout,
+        html.print-layout .slide button {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -364,6 +442,34 @@ if __name__ == &quot;__main__&quot;:
         });
         
         window.addEventListener('hashchange', () => showSlide(indexFromHash()));
+        
+        // 列印：所有投影片套用列印版面，縮放樹狀圖，太高的投影片等比例縮小放進一頁
+        function fitSlideToPage(slide) {
+            const parts = [...slide.children];
+            const style = getComputedStyle(slide);
+            const available = slide.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+            let zoom = 1;
+            for (let i = 0; i < 5; i++) {
+                const needed = slide.scrollHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+                if (needed <= available + 1) break;
+                zoom = Math.floor(zoom * (available / needed) * 1000) / 1000;
+                parts.forEach(part => part.style.zoom = zoom);
+            }
+        }
+        
+        window.addEventListener('beforeprint', () => {
+            document.documentElement.classList.add('print-layout');
+            slides.forEach(slide => {
+                fitTrees(slide);
+                fitSlideToPage(slide);
+            });
+        });
+        
+        window.addEventListener('afterprint', () => {
+            document.documentElement.classList.remove('print-layout');
+            slides.forEach(slide => [...slide.children].forEach(part => part.style.zoom = ''));
+            fitTrees(slides[currentIndex]);
+        });
         
         window.addEventListener('resize', () => fitTrees(slides[currentIndex]));
         document.fonts.ready.then(() => fitTrees(slides[currentIndex]));

@@ -25,6 +25,7 @@ POLL_SECONDS = 0.5
 
 # 每秒詢問伺服器狀態：版本變了就重新載入（網址 hash 保留頁數），否則在角落顯示錯誤與警告
 LIVE_RELOAD_SCRIPT = '''
+<style>@media print { #briefgen-watch-status { display: none !important; } }</style>
 <script>
 (function () {
     const loadedVersion = %(version)d;

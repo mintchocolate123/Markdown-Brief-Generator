@@ -114,3 +114,11 @@ def test_ctrl_c_exits_cleanly(watching):
     watching.process.send_signal(signal.SIGINT)
     assert watching.process.wait(timeout=20) == 0
     watching.wait_for('[OK] 已結束即時預覽')
+
+
+def test_status_box_is_hidden_when_printing(page, watching):
+    page.goto(watching.url)
+    touch(watching.source, DECK.format('初版') + '<foo>錯字\n')
+    page.locator('#briefgen-watch-status').wait_for(state='visible')
+    page.emulate_media(media='print')
+    assert page.locator('#briefgen-watch-status').is_hidden()
