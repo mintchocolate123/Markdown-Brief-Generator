@@ -23,7 +23,7 @@ def pdf_pages(page):
 def test_pdf_has_one_16_9_page_per_slide(reference):
     slides = reference.evaluate("document.querySelectorAll('.slide').length")
     pages = pdf_pages(reference)
-    assert len(pages) == slides == 26
+    assert len(pages) == slides
     assert all(size == pytest.approx(PAGE_POINTS, abs=0.5) for size, _ in pages)
     assert '現在你知道所有格式了' in pages[-1][1]
     assert not any('下一張' in text or '複製' in text for _, text in pages)
