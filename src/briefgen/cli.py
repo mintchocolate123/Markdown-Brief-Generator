@@ -6,11 +6,14 @@ cli.py - 命令列介面
 
 import argparse
 
+from briefgen.console import use_utf8_output
 from briefgen.generator import PresentationGenerator
 
 
 def main():
     """命令列介面"""
+    use_utf8_output()
+    
     parser = argparse.ArgumentParser(description='HTML 簡報生成器')
     parser.add_argument('command', choices=['new', 'build', 'export-slides'],
                         help='指令：new (新建), build (生成), export-slides (匯出個別投影片)')
@@ -30,7 +33,7 @@ def main():
         
         output = args.output or 'presentation.json'
         gen.save_to_json(output)
-        print(f"✓ 已建立新專案: {output}")
+        print(f"[OK] 已建立新專案: {output}")
     
     elif args.command == 'build':
         if not args.input:
@@ -51,7 +54,7 @@ def main():
         # 生成 HTML
         output = args.output or 'presentation.html'
         gen.generate_html(output, args.template)
-        print(f"✓ 已生成簡報: {output}")
+        print(f"[OK] 已生成簡報: {output}")
     
     elif args.command == 'export-slides':
         if not args.input:
@@ -70,4 +73,4 @@ def main():
         # 匯出個別投影片
         output_dir = args.output or 'slides'
         gen.generate_individual_slides(output_dir)
-        print(f"✓ 已匯出 {len(gen.presentation.slides)} 張投影片到: {output_dir}")
+        print(f"[OK] 已匯出 {len(gen.presentation.slides)} 張投影片到: {output_dir}")

@@ -51,3 +51,23 @@ def test_launcher_generate_example(work_dir):
     assert result.returncode == 0, result.stderr.decode('utf-8', 'replace')
     assert (work_dir / 'example_output.html').exists()
     assert '完成' in result.stdout.decode('utf-8')
+
+
+def test_python_sources_are_cp950_encodable():
+    """終端輸出的文字都寫在原始碼裡，必須能以 cp950 編碼"""
+    sources = [ROOT / 'launcher.py', *(ROOT / 'src').rglob('*.py'), *(ROOT / 'tools').rglob('*.py')]
+    bad = []
+    for path in sources:
+        for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+            chars = {c for c in line if not c.isascii() and not _cp950_encodable(c)}
+            if chars:
+                bad.append(f'{path.relative_to(ROOT)}:{number}: {"".join(sorted(chars))}')
+    assert bad == []
+
+
+def _cp950_encodable(char):
+    try:
+        char.encode('cp950')
+    except UnicodeEncodeError:
+        return False
+    return True

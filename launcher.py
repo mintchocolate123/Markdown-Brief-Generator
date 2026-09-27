@@ -84,11 +84,11 @@ def build_from_markdown():
     print(f"輸出：{output_path}\n")
     
     if run_generator('build', '-i', str(input_path), '-o', str(output_path)):
-        print(f"\n✓ 完成！")
+        print("\n[OK] 完成！")
         if input("\n開啟簡報？(y/n): ").strip().lower() == 'y':
             open_file(output_path)
     else:
-        print("\n✗ 失敗")
+        print("\n[FAIL] 失敗")
     
     input("\n按 Enter 繼續...")
 
@@ -113,17 +113,26 @@ def generate_example():
     print(f"輸出：{output}\n")
     
     if run_generator('build', '-i', str(example), '-o', str(output), '--title', '範例'):
-        print(f"\n✓ 完成！")
+        print("\n[OK] 完成！")
         if input("\n開啟？(y/n): ").strip().lower() == 'y':
             open_file(output)
     else:
-        print("\n✗ 失敗")
+        print("\n[FAIL] 失敗")
     
     input("\n按 Enter 繼續...")
 
 
+def use_utf8_output():
+    """stdout/stderr 改用 UTF-8，不依賴系統編碼（未安裝 briefgen 時也要能執行）"""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, 'reconfigure'):
+            stream.reconfigure(encoding='utf-8', errors='replace')
+
+
 def main():
     """主選單"""
+    use_utf8_output()
+    
     if importlib.util.find_spec('briefgen') is None:
         print("找不到 briefgen 套件，請先在工具目錄執行一次：")
         print()

@@ -21,9 +21,11 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 try:
+    from briefgen.console import use_utf8_output
     from briefgen.parsing.slides import split_slide_ranges
 except ImportError:  # 尚未 pip install 時，從原始碼目錄載入
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'src'))
+    from briefgen.console import use_utf8_output
     from briefgen.parsing.slides import split_slide_ranges
 
 
@@ -294,6 +296,7 @@ def migrate(text: str) -> Tuple[str, List[str]]:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    use_utf8_output()
     parser = argparse.ArgumentParser(description='將舊版格式語法轉換為新語法')
     parser.add_argument('input', help='舊語法的 Markdown 檔案')
     group = parser.add_mutually_exclusive_group(required=True)
