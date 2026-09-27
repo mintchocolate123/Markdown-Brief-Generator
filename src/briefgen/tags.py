@@ -17,12 +17,14 @@ SIZE_MAP = {
 
 PIVOT_MAP = {'l': 'left', 'c': 'center', 'r': 'right'}
 
+# 顏色名稱已針對深色卡片背景調亮，除 black 外對比至少 4.5:1（WCAG AA）；
+# black 在卡片上看不清楚，維持 #000。自訂色碼不調整。
 COLOR_MAP = {
     'black': '#000', 'white': '#fff',
-    'red': '#f00', 'green': '#008000', 'blue': '#00f',
+    'red': '#ff9999', 'green': '#00d200', 'blue': '#adadff',
     'yellow': '#ff0', 'cyan': '#0ff',
-    'orange': '#ffa500', 'purple': '#800080',
-    'pink': '#ffc0cb', 'gray': '#808080',
+    'orange': '#ffa500', 'purple': '#d79eff',
+    'pink': '#ffc0cb', 'gray': '#b6b6b6',
 }
 
 

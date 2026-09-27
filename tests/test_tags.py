@@ -2,7 +2,7 @@
 
 import pytest
 
-from briefgen.tags import normalize_color, parse_format, split_list_item
+from briefgen.tags import COLOR_MAP, normalize_color, parse_format, split_list_item
 
 
 def fmt(line):
@@ -22,9 +22,9 @@ def fmt(line):
     ('<s u>x', {'text-decoration': 'underline line-through'}),
     ('<size=1>x', {'font-size': '0.7em'}),
     ('<size=7>x', {'font-size': '2.5em'}),
-    ('<color=purple>x', {'color': '#800080'}),
+    ('<color=purple>x', {'color': '#d79eff'}),
     ('<color=#ff6b6b>x', {'color': '#ff6b6b'}),
-    ('<b size=4 color=red>x', {'font-weight': 'bold', 'font-size': '1.2em', 'color': '#f00'}),
+    ('<b size=4 color=red>x', {'font-weight': 'bold', 'font-size': '1.2em', 'color': '#ff9999'}),
 ])
 def test_text_styles(line, styles):
     r = fmt(line)
@@ -56,7 +56,7 @@ def test_img():
 
 def test_later_duplicate_overrides():
     r = fmt('<color=red color=blue>x')
-    assert (r['styles'], r['warnings']) == ({'color': '#00f'}, [])
+    assert (r['styles'], r['warnings']) == ({'color': '#adadff'}, [])
 
 
 def test_whitespace_after_tag_is_stripped():
@@ -161,7 +161,7 @@ def test_backslash_elsewhere_is_kept():
 # --- 顏色 --------------------------------------------------------------------
 
 def test_normalize_color():
-    assert normalize_color(' Purple ') == '#800080'
+    assert normalize_color(' Purple ') == '#d79eff'
     assert normalize_color('#123') == '#123'
 
 
@@ -186,3 +186,22 @@ def test_list_item(line, expected):
 @pytest.mark.parametrize('line', ['-項目', '---', '-- 項目', '\\- 項目', '項目 - 不是', '-\t項目'])
 def test_not_list_item(line):
     assert split_list_item(line) is None
+
+
+# 卡片背景（10% 白疊在頁面漸層上）的相對亮度範圍
+CARD_LUMINANCE = (0.0324, 0.0627)
+
+
+def _luminance(hex_color):
+    h = hex_color.lstrip('#')
+    h = ''.join(c * 2 for c in h) if len(h) == 3 else h
+    channels = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+    linear = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+@pytest.mark.parametrize('name', sorted(set(COLOR_MAP) - {'black'}))
+def test_color_names_meet_wcag_aa_on_card(name):
+    text = _luminance(COLOR_MAP[name])
+    worst = min((max(text, bg) + 0.05) / (min(text, bg) + 0.05) for bg in CARD_LUMINANCE)
+    assert worst >= 4.5, f'{name} {COLOR_MAP[name]} 對比 {worst:.2f}'

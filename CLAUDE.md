@@ -42,6 +42,8 @@ python tools/migrate_syntax.py 舊.md -o 新.md
   每份 fixture 預期的警告列在 `tests/test_golden.py` 的 `EXPECTED_WARNINGS`
 - `tests/fixtures/old/` 是舊語法版本，轉換後必須等於 `fixtures/new/`
 - 改變輸出時，先列出 golden diff 給使用者確認，再重新產生 golden
+- commit 前必須確認 pytest 的結束碼為 0；不要把 pytest 的輸出接到 tail、head 等管線
+  （管線會吞掉結束碼），要截短輸出就先存檔再看
 - `docs/格式參考.md` 與 `examples/example.md` 生成時不可有警告
 - `tests/e2e/`：playwright（Python）瀏覽器端測試；沒有瀏覽器時自動 skip，
   CI 設 `BRIEFGEN_REQUIRE_E2E=1` 讓它改為失敗。瀏覽器行為（按鍵、縮放、列印、watch）都在這裡驗證
@@ -103,6 +105,10 @@ python tools/migrate_syntax.py 舊.md -o 新.md
 ### 已知格式
 b / bold、i / italic、u / underline、s / strike、ct、imp、cont、
 tab=N、pivot=l|c|r、size=1..7、color=名稱或色碼、link=網址、img=網址,寬,高
+
+顏色名稱已針對深色卡片背景調亮，除 black 外對比至少 4.5:1（WCAG AA）：
+red #ff9999、green #00d200、blue #adadff、purple #d79eff、gray #b6b6b6；
+white、yellow、cyan、orange、pink 原本就足夠；black 維持 #000（不建議使用）；自訂色碼不調整。
 
 ### 區塊標記
 `[table]...[/table]`、`[tree]...[/tree]`，參數同樣用 `=`：

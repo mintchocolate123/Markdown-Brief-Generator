@@ -69,7 +69,7 @@ def test_square_brackets_in_paragraph_are_text():
 
 def test_cell_formats_escape_and_unknown():
     body, warnings = render('[table]\n標題\n[c]<color=red b>紅\n\\<b>字面\n[c]<foo>未知\n[/table]')
-    assert 'color:#f00;font-weight:bold;">紅</td>' in body
+    assert 'color:#ff9999;font-weight:bold;">紅</td>' in body
     assert 'text-align:center;">&lt;b&gt;字面</td>' in body
     assert 'text-align:center;">&lt;foo&gt;未知</td>' in body
     assert warnings == [(5, '未知的格式名稱：foo，整行視為文字')]
@@ -77,7 +77,7 @@ def test_cell_formats_escape_and_unknown():
 
 def test_tree_node_formats_escape_and_unknown():
     body, warnings = render('[tree]\n[id=1] <color=red>根\n[id=2 p=1] \\<b>字面\n[id=3 p=1] <foo>未知\n[/tree]')
-    assert 'color:#f00;">根</div>' in body
+    assert 'color:#ff9999;">根</div>' in body
     assert '&lt;b&gt;字面</div>' in body
     assert '&lt;foo&gt;未知</div>' in body
     assert warnings == [(4, '未知的格式名稱：foo，整行視為文字')]

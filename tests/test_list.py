@@ -29,7 +29,7 @@ def test_tab_counts_as_one_level():
 
 
 def test_text_level_formats_apply_to_item_text():
-    assert render('- <b color=red>重點')[0] == item(0, '•', '<span style="font-weight:bold;color:#f00">重點</span>')
+    assert render('- <b color=red>重點')[0] == item(0, '•', '<span style="font-weight:bold;color:#ff9999">重點</span>')
 
 
 def test_link_in_item():
@@ -52,7 +52,7 @@ def test_block_formats_and_cont_are_ignored_with_warning(line, names):
 
 def test_cont_continues_list_item():
     assert render('- 前半\n<cont color=red>後半') == (
-        item(0, '•', '前半<span style="color:#f00">後半</span>'), [])
+        item(0, '•', '前半<span style="color:#ff9999">後半</span>'), [])
 
 
 def test_escaped_dash_is_literal():
@@ -82,4 +82,4 @@ def test_bullet_follows_item_size_but_not_color():
     assert render('- <size=6 color=red>大字')[0] == (
         '<div style="display:flex;align-items:baseline;margin-left:2em">'
         '<span style="flex:none;width:1.2em;font-size:2em">\u2022</span>'
-        '<div><span style="font-size:2em;color:#f00">大字</span></div></div>')
+        '<div><span style="font-size:2em;color:#ff9999">大字</span></div></div>')

@@ -27,7 +27,7 @@ def test_deeper_nodes_are_nested_under_their_parent():
 
 def test_child_node_keeps_its_own_formats():
     html = render('[id=1] 根', '[id=2 p=1] <color=red b>子')
-    assert f'<div style="{NODE}color:#f00;font-weight:bold;">子</div>' in html
+    assert f'<div style="{NODE}color:#ff9999;font-weight:bold;">子</div>' in html
 
 
 def test_parent_cycle_does_not_recurse_forever():

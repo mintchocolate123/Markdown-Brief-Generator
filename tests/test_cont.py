@@ -14,7 +14,7 @@ def render(content):
 
 def test_cont_becomes_span_in_previous_div():
     assert render('第一段\n<cont color=red>紅色') == (
-        '<div>第一段<span style="color:#f00">紅色</span></div>', [])
+        '<div>第一段<span style="color:#ff9999">紅色</span></div>', [])
 
 
 def test_cont_keeps_leading_whitespace():
@@ -33,14 +33,14 @@ def test_consecutive_cont_lines_share_one_div():
 
 def test_first_segment_text_formats_do_not_reach_cont():
     assert render('<color=red size=5 link=https://a.com>a\n<cont>b')[0] == (
-        '<div><span style="color:#f00;font-size:1.5em">'
+        '<div><span style="color:#ff9999;font-size:1.5em">'
         '<a href="https://a.com" target="_blank" style="color:#feca57;text-decoration:underline;">a</a>'
         '</span><span>b</span></div>')
 
 
 def test_block_formats_of_first_line_apply_to_whole_line():
     assert render('<pivot=c tab=1 color=red>a\n<cont b>b')[0] == (
-        '<div style="margin-left:2em;text-align:center"><span style="color:#f00">a</span>'
+        '<div style="margin-left:2em;text-align:center"><span style="color:#ff9999">a</span>'
         '<span style="font-weight:bold">b</span></div>')
 
 
@@ -48,13 +48,13 @@ def test_cont_inside_imp_box():
     imp = ('text-align:center;border:2px solid #feca57;border-radius:10px;padding:15px 20px;'
            'background:rgba(254,202,87,.1);margin:10px 0')
     assert render('<imp>重要\n<cont color=red>接續')[0] == (
-        f'<div style="{imp}">重要<span style="color:#f00">接續</span></div>')
+        f'<div style="{imp}">重要<span style="color:#ff9999">接續</span></div>')
     assert render('<imp b>重要\n<cont>接續')[0] == (
         f'<div style="{imp}"><span style="font-weight:bold">重要</span><span>接續</span></div>')
 
 
 def test_line_without_cont_is_unchanged():
-    assert render('<pivot=c color=red>a')[0] == '<div style="text-align:center;color:#f00">a</div>'
+    assert render('<pivot=c color=red>a')[0] == '<div style="text-align:center;color:#ff9999">a</div>'
 
 
 def test_cont_text_level_formats():
@@ -84,7 +84,7 @@ def test_cont_after_subtitle_goes_inside_subtitle_span():
                 'padding-bottom:5px;margin-bottom:10px;display:inline-block')
     assert render('<ct color=red>標題\n<cont i>補充')[0] == (
         '<div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px">'
-        f'<span style="{subtitle}"><span style="color:#f00">標題</span>'
+        f'<span style="{subtitle}"><span style="color:#ff9999">標題</span>'
         '<span style="font-style:italic">補充</span></span></div>')
 
 
