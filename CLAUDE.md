@@ -43,7 +43,22 @@ python tools/migrate_syntax.py 舊.md -o 新.md
 - `launcher.py`、`start.bat` 留在根目錄，以 `python -m briefgen` 呼叫；未安裝套件時提示 `pip install -e .`
 - 版本號只寫在 `src/briefgen/__init__.py` 的 `__version__`，pyproject 與 launcher 由此讀取
 - `tools/migrate_syntax.py`：舊語法轉換，已是新語法的內容不變（可重複執行）
-- `docs/格式參考.md` 是唯一的格式說明，本身也是簡報；`examples/example.md` 是範例
+- `examples/example.md` 是教學風格的範例簡報，`examples/template.md` 是空白範本，圖片放 `examples/images/`
+
+## 檔案與文件分工
+
+| 檔案 | 內容 |
+|---|---|
+| `README.md` | 這是什麼、安裝、30 秒上手、文件連結（保持精簡，開發內容不放這裡） |
+| `CHANGELOG.md` | 各版本變化，對應 git tag；尚未發版的改動寫在「未發布」 |
+| `docs/使用指南.md` | 使用者的完整說明：安裝 → 啟動器 → build / watch → 上台 → 列印 → 圖片 → 舊簡報轉換 → 常見問題 |
+| `docs/語法速查.md` | 一頁式語法表格 |
+| `docs/格式參考.md` | 用簡報展示所有格式的範例 |
+| `docs/開發.md` | 架構、測試、golden 更新流程、CI |
+| `LICENSE` | MIT |
+
+- 使用者文件的語法說明改了，要同步更新 `docs/語法速查.md` 與本檔的語法規格
+- 文件用繁體中文，不用 emoji（顏文字可以）；docs/ 與 examples/ 的每份 .md 都必須能無警告生成
 
 ## 測試
 
