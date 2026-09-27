@@ -36,7 +36,7 @@ def render(content):
     ('<imp>x', f'<div style="{IMP_STYLE}">x</div>'),
     ('<ct>x', f'<div style="display:flex;align-items:flex-end;flex-wrap:wrap;gap:10px"><span style="{SUBTITLE_STYLE}">x</span></div>'),
     ('<link=https://a.com/?x=1>x', f'<div><a href="https://a.com/?x=1" target="_blank" style="{LINK_STYLE}">x</a></div>'),
-    ('<img=https://a.com/a.png,300,150>', '<div><img src="https://a.com/a.png" style="max-width:100%;border-radius:10px;"></div>'),
+    ('<img=https://a.com/a.png,300,150>', '<div><img src="https://a.com/a.png" style="width:300px;aspect-ratio:300/150;height:auto;object-fit:contain;max-width:100%;border-radius:10px;"></div>'),
     ('<pivot=c size=6 color=orange>大標題', '<div style="text-align:center;font-size:2em;color:#ffa500">大標題</div>'),
 ])
 def test_each_format(line, html):

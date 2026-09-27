@@ -161,3 +161,14 @@ string s = "c#";
 ## 只有副標題
 
 副標題放在主標題的位置
+
+---
+
+# 本機圖片
+## 相對路徑與找不到的圖片
+
+<img<images/dot.svg,40,20>>
+
+<img<images/不存在.png,auto,auto>>
+
+<img<images/square.svg,40,20>>

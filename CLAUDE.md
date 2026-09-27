@@ -113,7 +113,18 @@ python tools/migrate_syntax.py 舊.md -o 新.md
 
 ### 已知格式
 b / bold、i / italic、u / underline、s / strike、ct、imp、cont、
-tab=N、pivot=l|c|r、size=1..7、color=名稱或色碼、link=網址、img=網址,寬,高
+tab=N、pivot=l|c|r、size=1..7、color=名稱或色碼、link=網址、img=路徑或網址,寬,高
+
+### 圖片
+- `img=路徑或網址,寬,高`：寬高為整數（像素）或 `auto`，其他值整行當文字並警告；
+  路徑有空白時整個值用雙引號：`<img="我的 圖片/a.png,400,auto">`
+- 寬高都指定時以 `aspect-ratio` 保持寫的比例；保留 `max-width:100%`，縮小時高度等比例
+- 指定高度時（不論有沒有寬度）都加 `object-fit:contain`：寫的比例和原圖不同、或寬度被 max-width 壓縮時，
+  圖片完整顯示在框內，不變形
+- 本機圖片的相對路徑以 .md 檔所在資料夾為基準，生成時嵌成 data URI（輸出是單一檔案，watch 同樣適用）
+- `http://`、`https://`、`data:` 開頭的網址維持原樣，不下載
+- 找不到檔案時警告（附行號），圖片位置顯示「找不到圖片：路徑」
+- 嵌入的本機圖片超過 1 MB 時警告（檔名、大小、行號），建議先壓縮；不阻止生成
 
 顏色名稱已針對深色卡片背景調亮，除 black 外對比至少 4.5:1（WCAG AA）：
 red #ff9999、green #00d200、blue #adadff、purple #d79eff、gray #b6b6b6；

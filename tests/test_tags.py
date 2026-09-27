@@ -49,6 +49,15 @@ def test_link_splits_only_first_equals():
     assert fmt('<link=https://a.com/?x=1&y=2>x')['link'] == 'https://a.com/?x=1&y=2'
 
 
+@pytest.mark.parametrize('value, size', [
+    ('a.png,400,auto', ('400', 'auto')), ('a.png,auto,200', ('auto', '200')),
+    ('"a.png, 400 , 200 "', ('400', '200')),
+])
+def test_img_sizes(value, size):
+    image = fmt(f'<img={value}>')['image']
+    assert (image['width'], image['height']) == size
+
+
 def test_img():
     r = fmt('<img=https://a.com/a.png,300,150>')
     assert r['image'] == {'url': 'https://a.com/a.png', 'width': '300', 'height': '150'}
@@ -111,6 +120,9 @@ def test_unclosed_quote_means_no_closing_bracket():
     ('<pivot=x>x', '格式 pivot 的值不合法：x'),
     ('<tab=abc>x', '格式 tab 的值不合法：abc'),
     ('<img=a.png,1>x', '格式 img 的值不合法：a.png,1'),
+    ('<img=a.png,abc,10>x', '格式 img 的值不合法：a.png,abc,10'),
+    ('<img=a.png,10px,10>x', '格式 img 的值不合法：a.png,10px,10'),
+    ('<img=,10,10>x', '格式 img 的值不合法：,10,10'),
     ('<b=1>x', '格式 b 不接受參數'),
     ('<color>x', '格式 color 需要參數'),
     ('<color=>x', '格式 color 的值不合法：'),

@@ -75,8 +75,8 @@ def test_cont_after_link_and_image():
     assert render('<link=https://a.com>a\n<cont>b')[0] == (
         '<div><a href="https://a.com" target="_blank" style="color:#feca57;text-decoration:underline;">a</a>'
         '<span>b</span></div>')
-    assert render('<img=x.png,1,2>\n<cont>說明')[0] == (
-        '<div><img src="x.png" style="max-width:100%;border-radius:10px;"><span>說明</span></div>')
+    assert render('<img=https://a.com/x.png,auto,auto>\n<cont>說明')[0] == (
+        '<div><img src="https://a.com/x.png" style="max-width:100%;border-radius:10px;"><span>說明</span></div>')
 
 
 def test_cont_after_subtitle_goes_inside_subtitle_span():

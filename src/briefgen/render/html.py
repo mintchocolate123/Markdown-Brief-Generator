@@ -4,13 +4,24 @@
 html.py - 將投影片內容渲染為 HTML
 """
 
+import base64
+import mimetypes
 import re
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from briefgen.parsing.blocks import MarkdownParser
 from briefgen.highlighter import SyntaxHighlighter
 from briefgen.model import Slide
 from briefgen.tags import BLOCK_FORMATS, parse_format, split_list_item
 
+
+# 嵌入的本機圖片超過這個大小時警告
+IMAGE_SIZE_WARNING = 1024 * 1024
+
+IMAGE_TYPES = {
+    '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif',
+    '.svg': 'image/svg+xml', '.webp': 'image/webp', '.bmp': 'image/bmp', '.avif': 'image/avif',
+}
 
 # 清單項目符號，依層級循環
 LIST_BULLETS = ('\u2022', '\u25e6', '\u25aa')
@@ -22,7 +33,9 @@ WarnFunc = Callable[[int, int, str], None]
 class HTMLRenderer:
     """HTML 渲染器"""
     
-    def __init__(self, warn: Optional[WarnFunc] = None):
+    def __init__(self, warn: Optional[WarnFunc] = None, base_dir: Optional[Path] = None):
+        # 本機圖片的相對路徑以 base_dir（Markdown 檔所在資料夾）為基準
+        self.base_dir = base_dir
         self.parser = MarkdownParser()
         self.highlighter = SyntaxHighlighter()
         self._warn_func = warn
@@ -125,6 +138,8 @@ class HTMLRenderer:
                 self._warn(line_index, '段落第一行的 cont 沒有可接續的行，當作一般行')
                 parsed['text'] = parsed['text'].strip()
             
+            if parsed['image']:
+                parsed['image']['src'] = self._image_src(parsed['image']['url'], line_index)
             entries.append((parsed, []))
         
         return ''.join(self._render_formatted_line(parsed, ''.join(spans))
@@ -148,6 +163,43 @@ class HTMLRenderer:
             return text
         return f'<a href="{link}" target="_blank" style="color:#feca57;text-decoration:underline;">{text}</a>'
     
+    def _image_src(self, url: str, line_index: int) -> Optional[str]:
+        """網址維持原樣；本機圖片讀檔嵌成 data URI，找不到時警告並回傳 None"""
+        if url.lower().startswith(('http://', 'https://', 'data:')):
+            return url
+        path = Path(url)
+        if not path.is_absolute():
+            path = (self.base_dir or Path.cwd()) / path
+        if not path.is_file():
+            self._warn(line_index, f'找不到圖片：{url}')
+            return None
+        data = path.read_bytes()
+        if len(data) > IMAGE_SIZE_WARNING:
+            self._warn(line_index, f'圖片 {url} 有 {len(data) / 1024 / 1024:.1f} MB，嵌入後 HTML 會很大，建議先壓縮')
+        mime = IMAGE_TYPES.get(path.suffix.lower()) or mimetypes.guess_type(path.name)[0] or 'application/octet-stream'
+        return f'data:{mime};base64,' + base64.b64encode(data).decode('ascii')
+    
+    def _image_style(self, width: str, height: str) -> str:
+        """寬高（像素或 auto）；縮小時保持比例，圖片完整顯示在框內不變形"""
+        parts = []
+        if width != 'auto':
+            parts.append(f'width:{width}px')
+        if height != 'auto':
+            if width != 'auto':
+                # 框的比例照寫的寬高；原圖比例不同時完整顯示在框內
+                parts += [f'aspect-ratio:{width}/{height}', 'height:auto', 'object-fit:contain']
+            else:
+                # 寬度被 max-width 壓縮時高度不變，contain 避免變形
+                parts += [f'height:{height}px', 'object-fit:contain']
+        return ';'.join(parts + ['max-width:100%', 'border-radius:10px']) + ';'
+    
+    def _render_image(self, image: Dict[str, str]) -> str:
+        if image.get('src') is None:
+            return ('<div style="display:inline-block;padding:15px 20px;border:2px dashed rgba(255,255,255,.4);'
+                    f'border-radius:10px;color:#b6b6b6">找不到圖片：{self._escape_html(image["url"])}</div>')
+        style = self._image_style(image['width'], image['height'])
+        return f'<img src="{self._escape_html(image["src"])}" style="{style}">'
+    
     def _render_list_item(self, parsed: Dict[str, Any], continuation: str) -> str:
         """渲染清單項目：項目符號與文字分開，換行時對齊文字（懸掛縮排）"""
         level = parsed['list_level']
@@ -167,8 +219,7 @@ class HTMLRenderer:
         
         # 處理圖片
         if parsed['image']:
-            img = parsed['image']
-            return f'<div><img src="{img["url"]}" style="max-width:100%;border-radius:10px;">{continuation}</div>'
+            return f'<div>{self._render_image(parsed["image"])}{continuation}</div>'
         
         # 建立樣式字串
         style_parts = []

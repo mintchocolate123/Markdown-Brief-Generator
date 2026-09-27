@@ -75,7 +75,8 @@ class PresentationGenerator:
         template = Template(template_content)
         
         # 渲染每張投影片
-        renderer = HTMLRenderer(warn=self._warn)
+        base_dir = Path(self.source_path).parent if self.source_path else None
+        renderer = HTMLRenderer(warn=self._warn, base_dir=base_dir)
         slide_htmls = []
         
         for i, slide in enumerate(self.presentation.slides):

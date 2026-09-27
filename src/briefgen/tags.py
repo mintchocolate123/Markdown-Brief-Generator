@@ -60,13 +60,20 @@ FLAG_FORMATS = {
 # 只作用於整行的格式，不能用在 cont 行
 BLOCK_FORMATS = ('pivot', 'tab', 'imp', 'ct', 'img')
 
+def _valid_image(value: str) -> bool:
+    """img=網址或路徑,寬,高；寬高為整數（像素）或 auto"""
+    parts = [p.strip() for p in value.split(',')]
+    return (len(parts) == 3 and parts[0] != ''
+            and all(re.fullmatch(r'\d+|auto', p) for p in parts[1:]))
+
+
 VALUE_FORMATS = {
     'tab': lambda v: re.fullmatch(r'\d+', v) is not None,
     'pivot': lambda v: v in PIVOT_MAP,
     'size': lambda v: v in SIZE_MAP,
     'color': lambda v: v != '',
     'link': lambda v: v != '',
-    'img': lambda v: len(v.split(',')) == 3 and all(p.strip() for p in v.split(',')),
+    'img': lambda v: _valid_image(v),
 }
 
 
@@ -196,7 +203,7 @@ def parse_format(line: str) -> Dict[str, Any]:
         elif kind == 'link':
             result['link'] = value
         elif kind == 'img':
-            url, width, height = value.split(',')
+            url, width, height = (p.strip() for p in value.split(','))
             result['image'] = {'url': url, 'width': width, 'height': height}
 
     if decorations:
