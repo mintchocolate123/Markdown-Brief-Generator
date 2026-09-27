@@ -41,13 +41,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     build_parser.add_argument('-i', '--input', help='輸入的 Markdown 檔案')
     build_parser.add_argument('-o', '--output', help='輸出檔案')
     build_parser.add_argument('-t', '--title', help='簡報標題（未指定時使用第一張投影片的標題或檔名）')
-    build_parser.add_argument('--template', help='自訂模板路徑')
     
     watch_parser = commands.add_parser('watch', help='即時預覽：存檔後自動重新生成並重新載入瀏覽器')
     watch_parser.add_argument('input', help='Markdown 檔案')
     watch_parser.add_argument('-o', '--output', help='輸出檔案（預設為 Markdown 旁的同名 .html）')
     watch_parser.add_argument('-t', '--title', help='簡報標題')
-    watch_parser.add_argument('--template', help='自訂模板路徑')
     watch_parser.add_argument('--port', type=int, default=0, help='伺服器埠號（預設自動選擇）')
     watch_parser.add_argument('--no-open', action='store_true', help='不要自動開啟瀏覽器')
     
@@ -65,7 +63,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     
     # 生成 HTML
     output = args.output or 'presentation.html'
-    gen.generate_html(output, args.template)
+    gen.generate_html(output)
     print(f"[OK] 已生成簡報: {output}")
     return 0
 
@@ -77,5 +75,5 @@ def _watch(args: argparse.Namespace) -> int:
     if not source.is_file():
         return _error(f"找不到檔案：{source}")
     output = Path(args.output) if args.output else source.with_suffix('.html')
-    return watch.run(source.resolve(), output, title=args.title, template=args.template,
+    return watch.run(source.resolve(), output, title=args.title,
                      port=args.port, open_browser=not args.no_open)

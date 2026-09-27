@@ -46,8 +46,7 @@
 ├── tests/                   # pytest 測試與 golden 檔；tests/e2e/ 為瀏覽器端測試
 ├── launcher.py              # 中文互動式啟動器
 ├── start.bat                # Windows 雙擊啟動
-├── pyproject.toml           # 套件設定（pip install -e .）
-├── requirements.txt         # 執行依賴
+├── pyproject.toml           # 套件設定與依賴（pip install -e .）
 └── requirements-dev.txt     # 開發依賴（pytest、playwright、pypdfium2）
 ```
 
@@ -77,13 +76,7 @@ briefgen build -i examples/example.md -o output.html
 簡報標題（瀏覽器分頁上的 `<title>`）預設取第一張投影片的 `#` 標題，沒有時用 `##` 副標題，再沒有才用檔名（不含副檔名），
 可用 `-t "標題"` 指定。
 
-### 2. 使用自訂模板
-
-```bash
-briefgen build -i examples/example.md -o output.html --template custom_template.html
-```
-
-### 3. 即時預覽
+### 2. 即時預覽
 
 ```bash
 briefgen watch examples/example.md
@@ -94,7 +87,7 @@ briefgen watch examples/example.md
 - 格式有警告時頁面照常更新，並在右上角列出警告；生成失敗時保留上一個成功的版本並顯示錯誤
 - 寫到磁碟的 HTML 不含即時預覽用的程式碼；按 Ctrl+C 結束
 
-### 4. 列印 / 輸出 PDF
+### 3. 列印 / 輸出 PDF
 
 在瀏覽器開啟生成的 HTML，按 Ctrl+P（Mac 為 Cmd+P），目的地選「另存為 PDF」。
 

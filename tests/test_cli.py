@@ -78,3 +78,10 @@ def test_build_title_from_first_slide_subtitle(tmp_path):
     (tmp_path / 'b.md').write_text('## 只有副標題\n內容\n', encoding='utf-8')
     assert briefgen('build', '-i', 'b.md', '-o', 'out.html', cwd=tmp_path)[0] == 0
     assert html_title(tmp_path / 'out.html') == '只有副標題'
+
+
+@pytest.mark.parametrize('args', [['build', '-i', 'a.md', '--template', 't.html'],
+                                  ['watch', 'a.md', '--template', 't.html']])
+def test_template_option_is_removed(files, args):
+    code, _, err = briefgen(*args, cwd=files)
+    assert code == 2 and '--template' in err

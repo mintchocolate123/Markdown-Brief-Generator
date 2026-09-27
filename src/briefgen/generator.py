@@ -56,19 +56,17 @@ class PresentationGenerator:
         self.warnings.append(warning)
         print(warning, file=sys.stderr)
     
-    def generate_html(self, output_path: str, template_path: Optional[str] = None) -> None:
+    def generate_html(self, output_path: str) -> None:
         """生成 HTML 簡報並寫入檔案"""
-        html = self.render_html(template_path)
+        html = self.render_html()
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html)
     
-    def render_html(self, template_path: Optional[str] = None) -> str:
+    def render_html(self) -> str:
         """生成 HTML 簡報，回傳內容"""
         self.warnings = []
         # 使用預設模板或自訂模板
-        if template_path is None:
-            template_path = Path(__file__).parent / 'templates' / 'template.html'
-        
+        template_path = Path(__file__).parent / 'templates' / 'template.html'
         with open(template_path, 'r', encoding='utf-8') as f:
             template_content = f.read()
         

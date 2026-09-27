@@ -74,12 +74,10 @@ NO_BUILD_PAGE = '''<!DOCTYPE html>
 class Watcher:
     """監看 Markdown 檔，變更時重新生成並記錄狀態"""
 
-    def __init__(self, source: Path, output: Path, title: Optional[str] = None,
-                 template: Optional[str] = None):
+    def __init__(self, source: Path, output: Path, title: Optional[str] = None):
         self.source = source
         self.output = output
         self.title = title
-        self.template = template
         self.html: Optional[str] = None  # 上一個成功的版本（不含 live reload）
         self.version = 0
         self.error: Optional[str] = None
@@ -101,7 +99,7 @@ class Watcher:
             gen.load_from_markdown(str(self.source))
             if self.title is not None:
                 gen.presentation.title = self.title
-            html = gen.render_html(self.template)
+            html = gen.render_html()
             self.output.write_text(html, encoding='utf-8')
         except Exception as error:  # 讀檔、編碼、模板等任何錯誤都不中斷 watch
             with self._lock:
@@ -181,10 +179,10 @@ def serve(watcher: Watcher, port: int = 0) -> ThreadingHTTPServer:
     return server
 
 
-def run(source: Path, output: Path, *, title: Optional[str] = None, template: Optional[str] = None,
+def run(source: Path, output: Path, *, title: Optional[str] = None,
         port: int = 0, open_browser: bool = True) -> int:
     """執行即時預覽直到 Ctrl+C，回傳結束碼"""
-    watcher = Watcher(source, output, title=title, template=template)
+    watcher = Watcher(source, output, title=title)
     server = None
     # 啟動途中（生成、開瀏覽器）按 Ctrl+C 也要正常結束
     try:

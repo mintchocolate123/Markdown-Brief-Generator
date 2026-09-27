@@ -1,9 +1,8 @@
 __pycache__/
 *.pyc
 *_output.html
-test*.html
 .vscode/
-Brief/.venv/
+.venv/
 .pytest_cache/
 *.egg-info/
 build/
