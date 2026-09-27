@@ -17,16 +17,16 @@ python tools/migrate_syntax.py 舊.md -o 新.md
 
 1. `parsing/slides.py`：以單獨一行 `---` 切割投影片，取出 `# ` 標題與 `## ` 副標題；
    ``` 程式碼區塊內的 `---` 與 `#` 不影響分頁和標題（轉換工具共用同一套切法），
-   `Slide.source_lines` 記錄每個內容行在原始檔的行號（不寫入 JSON）
+   `Slide.source_lines` 記錄每個內容行在原始檔的行號（供警告使用）
 2. `parsing/blocks.py`：`MarkdownParser.parse()` 抽出程式碼、`[table]`、`[tree]` 區塊，
    以 `[BLOCK_REF:key]` 佔位，並回傳每行的原始行索引；樹節點文字在這裡解析
 3. `tags.py`：`parse_format()` 是唯一的行首格式解析，段落、儲存格、樹節點共用；
    回傳 styles 與區塊層級欄位，錯誤不丟例外，而是放進 `warnings`
 4. `render/html.py`：`HTMLRenderer` 渲染段落（含 cont 接續）與區塊，
    警告依行號排序後交給 `warn` callback
-5. `generator.py`：`PresentationGenerator` 載入 Markdown/JSON、套用
+5. `generator.py`：`PresentationGenerator` 載入 Markdown、套用
    `templates/template.html`，把警告以 `檔名:行號: 訊息` 印到 stderr
-6. `cli.py` / `__main__.py`：`python -m briefgen new|build|export-slides`
+6. `cli.py` / `__main__.py`：`briefgen build`（`python -m briefgen build`）
 
 其他：
 - `launcher.py`、`start.bat` 留在根目錄，以 `python -m briefgen` 呼叫；未安裝套件時提示 `pip install -e .`
@@ -99,7 +99,7 @@ tab=N、pivot=l|c|r、size=1..7、color=名稱或色碼、link=網址、img=網�
 - 樹節點方括號只接受 `id`、`p`；其他設定（如未轉換的 `o=1/2`）警告並忽略該項，節點照樣建立
 
 ### 警告
-- 印到 stderr，Markdown 檔為 `檔名:行號: 訊息`，JSON 專案為 `投影片 N 第 M 行: 訊息`
+- 印到 stderr，格式為 `檔名:行號: 訊息`（程式直接建立、沒有來源檔的投影片為 `投影片 N 第 M 行: 訊息`）
 - 行號是原始檔案中的行號
 
 ### 已廢除

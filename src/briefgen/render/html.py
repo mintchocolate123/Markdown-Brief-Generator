@@ -8,7 +8,7 @@ import re
 from typing import Any, Callable, Dict, List, Optional, Tuple
 from briefgen.parsing.blocks import MarkdownParser
 from briefgen.highlighter import SyntaxHighlighter
-from briefgen.model import Slide, SlideTheme
+from briefgen.model import Slide
 from briefgen.tags import BLOCK_FORMATS, parse_format
 
 
@@ -19,8 +19,7 @@ WarnFunc = Callable[[int, int, str], None]
 class HTMLRenderer:
     """HTML 渲染器"""
     
-    def __init__(self, theme: SlideTheme, warn: Optional[WarnFunc] = None):
-        self.theme = theme
+    def __init__(self, warn: Optional[WarnFunc] = None):
         self.parser = MarkdownParser()
         self.highlighter = SyntaxHighlighter()
         self._warn_func = warn

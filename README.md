@@ -14,7 +14,7 @@
 │   ├── __main__.py          # python -m briefgen 進入點
 │   ├── cli.py               # 命令列介面
 │   ├── generator.py         # PresentationGenerator（載入/儲存、生成 HTML）
-│   ├── model.py             # 資料模型（Slide, Presentation, SlideTheme）
+│   ├── model.py             # 資料模型（Slide, Presentation）
 │   ├── tags.py              # 行首格式解析（行內、儲存格、樹節點共用）
 │   ├── highlighter.py       # 程式碼語法高亮
 │   ├── parsing/
@@ -55,34 +55,16 @@ pip install -e .
 
 命令列中的 `briefgen` 也可以寫成 `python -m briefgen`（例如 Python 的 Scripts 目錄不在 PATH 時）。
 
-### 1. 建立新專案
-
-```bash
-briefgen new -o my_presentation.json --title "我的簡報"
-```
-
-### 2. 從 Markdown 生成簡報
+### 1. 從 Markdown 生成簡報
 
 ```bash
 briefgen build -i examples/example.md -o output.html
 ```
 
 簡報標題（瀏覽器分頁上的 `<title>`）預設取第一張投影片的 `#` 標題，沒有時用檔名（不含副檔名），
-可用 `-t "標題"` 指定。JSON 專案預設用檔案內的 `title`，同樣可用 `-t` 覆蓋。
+可用 `-t "標題"` 指定。
 
-### 3. 從 JSON 專案生成簡報
-
-```bash
-briefgen build -i my_presentation.json -o output.html
-```
-
-### 4. 匯出個別投影片 HTML
-
-```bash
-briefgen export-slides -i examples/example.md -o slides_output/
-```
-
-### 5. 使用自訂模板
+### 2. 使用自訂模板
 
 ```bash
 briefgen build -i examples/example.md -o output.html --template custom_template.html
@@ -137,8 +119,7 @@ python tools/migrate_syntax.py 舊簡報.md --in-place
 ### model.py
 定義資料結構：
 - `Slide` - 單張投影片
-- `Presentation` - 簡報專案
-- `SlideTheme` - 主題配色
+- `Presentation` - 簡報（標題與投影片）
 
 ### parsing/slides.py
 以 `---` 切割投影片，取出 `#` 標題與 `##` 副標題，並記錄每行在原始檔的行號（供警告使用）。
@@ -165,32 +146,12 @@ python tools/migrate_syntax.py 舊簡報.md --in-place
 - 處理 cont 接續
 
 ### generator.py / cli.py
-- 載入/儲存專案
+- 載入 Markdown
 - 組合 Jinja2 模板
 - 生成最終 HTML、印出格式警告
 - 命令列介面
 
-## 進階功能
-
-### 自訂主題
-
-修改 `src/briefgen/model.py` 中的 `SlideTheme` 預設值，或在程式中動態設定：
-
-```python
-from briefgen.model import Presentation, SlideTheme
-
-presentation = Presentation()
-presentation.theme = SlideTheme(
-    primary_color="#ff6b6b",
-    secondary_color="#4ecdc4",
-    accent_color="#ffe66d",
-    bg_start="#1a1a2e",
-    bg_mid="#16213e",
-    bg_end="#0f3460"
-)
-```
-
-### 批次處理
+## 在程式中使用
 
 ```python
 from briefgen.generator import PresentationGenerator
@@ -198,7 +159,6 @@ from briefgen.generator import PresentationGenerator
 gen = PresentationGenerator()
 gen.load_from_markdown('slides.md')
 gen.generate_html('output.html')
-gen.generate_individual_slides('slides/')
 ```
 
 ## 測試
@@ -225,16 +185,14 @@ python -m pytest
 2. **Markdown 支援** - 使用標準 Markdown 語法（```）
 3. **命令列工具** - 移除 GUI，改用 CLI
 4. **Jinja2 模板** - 可自訂 HTML 模板
-5. **獨立投影片** - 可匯出每張投影片為獨立 HTML
-6. **型別提示** - 使用 Python type hints
-7. **資料類別** - 使用 @dataclass 簡化模型
+5. **型別提示** - 使用 Python type hints
+6. **資料類別** - 使用 @dataclass 簡化模型
 
 ### 保留功能
 
 - 所有格式（語法改為 `<size=5 color=red>`，舊檔請見「舊簡報如何用 migrate_syntax.py 轉換」）
 - 程式碼語法高亮
 - 表格與樹狀圖
-- 主題配色系統
 
 ## 授權
 

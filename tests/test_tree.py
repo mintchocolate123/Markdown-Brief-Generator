@@ -1,6 +1,6 @@
 """樹狀圖渲染：任意深度、子節點格式、成環"""
 
-from briefgen.model import Slide, SlideTheme
+from briefgen.model import Slide
 from briefgen.render.html import HTMLRenderer
 
 NODE = ('background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;'
@@ -8,7 +8,7 @@ NODE = ('background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;'
 
 
 def render(*lines):
-    return HTMLRenderer(SlideTheme()).render_slide(Slide(content='\n'.join(['[tree]', *lines, '[/tree]'])), 0)
+    return HTMLRenderer().render_slide(Slide(content='\n'.join(['[tree]', *lines, '[/tree]'])), 0)
 
 
 def test_every_level_is_rendered():

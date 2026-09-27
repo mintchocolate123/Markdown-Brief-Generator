@@ -2,7 +2,7 @@
 
 import pytest
 
-from briefgen.model import Slide, SlideTheme
+from briefgen.model import Slide
 from briefgen.render.html import HTMLRenderer
 
 LINK_STYLE = 'color:#feca57;text-decoration:underline;'
@@ -14,7 +14,7 @@ IMP_STYLE = ('text-align:center;border:2px solid #feca57;border-radius:10px;padd
 
 def render(content):
     warnings = []
-    renderer = HTMLRenderer(SlideTheme(), warn=lambda s, line, msg: warnings.append((line + 1, msg)))
+    renderer = HTMLRenderer(warn=lambda s, line, msg: warnings.append((line + 1, msg)))
     html = renderer.render_slide(Slide(content=content), 0)
     body = html[len('<div class="slide" id="slide1"><div class="slide-content">'):-len('</div></div>')]
     return body, warnings

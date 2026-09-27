@@ -1,12 +1,12 @@
 """cont（接續上一行）的渲染與警告"""
 
-from briefgen.model import Slide, SlideTheme
+from briefgen.model import Slide
 from briefgen.render.html import HTMLRenderer
 
 
 def render(content):
     warnings = []
-    renderer = HTMLRenderer(SlideTheme(), warn=lambda s, line, msg: warnings.append((line + 1, msg)))
+    renderer = HTMLRenderer(warn=lambda s, line, msg: warnings.append((line + 1, msg)))
     html = renderer.render_slide(Slide(content=content), 0)
     body = html[len('<div class="slide" id="slide1"><div class="slide-content">'):-len('</div></div>')]
     return body, warnings

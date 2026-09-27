@@ -18,12 +18,6 @@ TREE_NODE_NAMES = {'id', 'p'}
 class MarkdownParser:
     """擴展的 Markdown 解析器"""
     
-    # 支援的程式語言
-    SUPPORTED_LANGS = {
-        'c', 'cpp', 'c++', 'cs', 'c#', 
-        'py', 'python', 'js', 'javascript', 'java'
-    }
-    
     # 語言標準化映射
     LANG_NORMALIZE = {
         'c++': 'cpp',
@@ -40,10 +34,6 @@ class MarkdownParser:
         """標準化語言名稱"""
         lang = lang.lower().strip()
         return self.LANG_NORMALIZE.get(lang, lang)
-    
-    def is_supported_lang(self, lang: str) -> bool:
-        """檢查是否支援該語言的語法高亮"""
-        return self.normalize_lang(lang) in self.SUPPORTED_LANGS
     
     def parse(self, content: str) -> Tuple[str, List[Dict[str, Any]], List[int]]:
         """
