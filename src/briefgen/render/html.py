@@ -316,14 +316,15 @@ class HTMLRenderer:
         # 渲染樹（使用原始的 flex 佈局）
         tree_html = self._render_tree_flex(root_nodes, node_map)
         
-        return f'<div style="{width_style}">{tree_html}</div>'
+        # class="tree"：模板在樹比卡片寬時等比例縮小
+        return f'<div class="tree" style="{width_style}">{tree_html}</div>'
     
     def _render_tree_flex(self, nodes: List[Dict], node_map: Dict) -> str:
         """使用 flex 布局渲染樹"""
         if not nodes or len(nodes) == 0:
             return ''
         
-        html = '<div style="display:flex;flex-direction:column;align-items:center;margin:10px 0;">'
+        html = '<div style="display:flex;flex-direction:column;align-items:center;margin:10px auto;width:max-content;">'
         
         for node in nodes:
             subtree = self._render_tree_node(node, node_map, set())
@@ -343,8 +344,8 @@ class HTMLRenderer:
     
     def _render_tree_node(self, node: Dict, node_map: Dict, ancestors: set) -> str:
         """渲染節點與它底下任意深度的子樹"""
-        # 節點樣式
-        node_style = 'background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;display:inline-block;margin:5px;border:2px solid rgba(255,255,255,.3);'
+        # 節點樣式（上下不留 margin，連接線才會接到方框）
+        node_style = 'background:rgba(255,255,255,.15);padding:8px 16px;border-radius:20px;display:inline-block;margin:0 5px;border:2px solid rgba(255,255,255,.3);'
         
         # 加入自訂樣式
         for k, v in node.get('styles', {}).items():
@@ -359,13 +360,18 @@ class HTMLRenderer:
         if not children:
             return html
         
-        html += '<div style="width:2px;height:15px;background:rgba(255,255,255,.4)"></div>'
-        html += '<div style="height:2px;background:rgba(255,255,255,.4);width:80%;max-width:200px"></div>'
-        html += '<div style="display:flex;gap:20px">'
+        line = '<div style="width:2px;height:15px;background:rgba(255,255,255,.4)"></div>'
+        html += line
+        html += '<div style="display:flex">'
         
-        for child in children:
-            html += '<div style="display:flex;flex-direction:column;align-items:center">'
-            html += '<div style="width:2px;height:15px;background:rgba(255,255,255,.4)"></div>'
+        for index, child in enumerate(children):
+            html += '<div style="display:flex;flex-direction:column;align-items:center;position:relative;padding:0 10px">'
+            # 橫線從第一個子節點的中心連到最後一個子節點的中心，每個子節點畫自己那一段
+            if len(children) > 1:
+                left = '50%' if index == 0 else '0'
+                right = '50%' if index == len(children) - 1 else '0'
+                html += f'<div style="position:absolute;top:0;left:{left};right:{right};height:2px;background:rgba(255,255,255,.4)"></div>'
+            html += line
             html += f'<div style="display:flex;flex-direction:column;align-items:center;">{self._render_tree_node(child, node_map, path)}</div>'
             html += '</div>'
         

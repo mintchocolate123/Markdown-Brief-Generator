@@ -190,6 +190,23 @@
             document.getElementById('progressBar').style.width = progress + '%';
             
             window.scrollTo(0, 0);
+            fitTrees(slides[index]);
+        }
+        
+        // 樹狀圖比卡片寬時等比例縮小，不超出也不出現捲軸
+        function fitTrees(slide) {
+            slide.querySelectorAll('.tree').forEach(tree => {
+                const body = tree.firstElementChild;
+                let zoom = 1;
+                body.style.zoom = '';
+                // 縮小後框線會取整到至少 1px，所以量測後再修正幾次
+                for (let i = 0; i < 5; i++) {
+                    const ratio = tree.clientWidth / body.getBoundingClientRect().width;
+                    if (ratio >= 1) break;
+                    zoom = Math.floor(zoom * ratio * 1000) / 1000;
+                    body.style.zoom = zoom;
+                }
+            });
         }
         
         function changeSlide(direction) {
@@ -237,6 +254,9 @@
                 changeSlide(-1);
             }
         });
+        
+        window.addEventListener('resize', () => fitTrees(slides[currentIndex]));
+        document.fonts.ready.then(() => fitTrees(slides[currentIndex]));
         
         showSlide(0);
     </script>
