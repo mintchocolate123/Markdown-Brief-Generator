@@ -1,0 +1,2 @@
+# 圖片會以位元組嵌入 HTML，換行不能隨平台轉換（Windows checkout 預設轉成 CRLF）
+*.svg text eol=lf
