@@ -15,11 +15,13 @@ def test_copied_html_still_shows_local_images(page, build, tmp_path):
     shutil.copy(html, moved)
 
     open_slides(page, moved)
-    show_slide_titled(page, '圖片')
-    images = page.evaluate(LOADED)
-    assert len(images) == 2
-    assert all(i['complete'] and i['width'] == 400 for i in images)
-    assert [round(i['shown']) for i in images] == [400, 200]
+    shown = []
+    for title in ('圖片', '高度寫 auto 時依原圖比例'):
+        show_slide_titled(page, title)
+        images = page.evaluate(LOADED)
+        assert len(images) == 1 and images[0]['complete'] and images[0]['width'] == 400, title
+        shown.append(round(images[0]['shown']))
+    assert shown == [400, 200]
 
 
 def test_image_shrinks_proportionally_in_narrow_window(page, build):
