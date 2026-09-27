@@ -7,6 +7,9 @@ import sys
 
 import pytest
 
+from briefgen.generator import markdown_title
+from briefgen.model import Slide
+
 MARKDOWN = '# 第一張\n內容\n'
 
 
@@ -23,13 +26,15 @@ def html_title(path):
 @pytest.fixture
 def files(tmp_path):
     (tmp_path / 'a.md').write_text(MARKDOWN, encoding='utf-8')
+    (tmp_path / '無標題 投影片.md').write_text('## 只有副標題\n內容\n---\n# 第二張\n', encoding='utf-8')
     (tmp_path / 'p.json').write_text(json.dumps({'title': 'JSON 標題', 'slides': [{'title': 'x'}]}),
                                      encoding='utf-8')
     return tmp_path
 
 
 @pytest.mark.parametrize('source, title_args, expected', [
-    ('a.md', [], '簡報'),
+    ('a.md', [], '第一張'),
+    ('無標題 投影片.md', [], '無標題 投影片'),
     ('a.md', ['-t', '指定標題'], '指定標題'),
     ('p.json', [], 'JSON 標題'),
     ('p.json', ['-t', '指定標題'], '指定標題'),
@@ -56,3 +61,17 @@ def test_errors_go_to_stderr_with_nonzero_exit(tmp_path, args, message):
     assert code == 1
     assert out == ''
     assert err.startswith('[FAIL] 錯誤：') and message in err
+
+
+@pytest.mark.parametrize('first_slide_title, filepath, expected', [
+    ('第一張', 'dir/檔名.md', '第一張'),
+    ('', 'dir/檔名.md', '檔名'),
+    ('', '', '簡報'),
+])
+def test_markdown_title_fallback_order(first_slide_title, filepath, expected):
+    slides = [Slide(title=first_slide_title), Slide(title='第二張')]
+    assert markdown_title(slides, filepath) == expected
+
+
+def test_markdown_title_without_slides():
+    assert markdown_title([], 'dir/空白.md') == '空白'

@@ -15,6 +15,16 @@ from briefgen.render.html import HTMLRenderer
 from briefgen.parsing.slides import parse_markdown_slides
 
 
+DEFAULT_TITLE = '簡報'
+
+
+def markdown_title(slides: list[Slide], filepath: str) -> str:
+    """Markdown 簡報的標題：第一張投影片的 # 標題，其次是檔名（不含副檔名），最後是預設值"""
+    if slides and slides[0].title:
+        return slides[0].title
+    return Path(filepath).stem or DEFAULT_TITLE
+
+
 class PresentationGenerator:
     """簡報生成器"""
     
@@ -42,6 +52,7 @@ class PresentationGenerator:
         # 解析 Markdown 檔案
         slides = parse_markdown_slides(content)
         self.presentation.slides = slides
+        self.presentation.title = markdown_title(slides, filepath)
         self.source_path = filepath
     
     def _warn(self, slide_index: int, line_index: int, message: str) -> None:

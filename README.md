@@ -67,6 +67,9 @@ briefgen new -o my_presentation.json --title "我的簡報"
 briefgen build -i examples/example.md -o output.html
 ```
 
+簡報標題（瀏覽器分頁上的 `<title>`）預設取第一張投影片的 `#` 標題，沒有時用檔名（不含副檔名），
+可用 `-t "標題"` 指定。JSON 專案預設用檔案內的 `title`，同樣可用 `-t` 覆蓋。
+
 ### 3. 從 JSON 專案生成簡報
 
 ```bash
