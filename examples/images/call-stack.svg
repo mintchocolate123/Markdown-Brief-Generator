@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="260" viewBox="0 0 480 260" font-family="sans-serif">
+  <rect width="480" height="260" rx="14" fill="#16213e"/>
+  <text x="24" y="34" fill="#feca57" font-size="16" font-weight="bold">呼叫堆疊（上面是最後呼叫的）</text>
+  <g font-size="16" fill="#ffffff">
+    <rect x="24" y="52" width="260" height="40" rx="8" fill="#e94560"/>
+    <text x="40" y="78">factorial(1)  回傳 1</text>
+    <rect x="24" y="100" width="260" height="40" rx="8" fill="#b83b54"/>
+    <text x="40" y="126">factorial(2)  等待 1</text>
+    <rect x="24" y="148" width="260" height="40" rx="8" fill="#8a3149"/>
+    <text x="40" y="174">factorial(3)  等待 2</text>
+    <rect x="24" y="196" width="260" height="40" rx="8" fill="#5c273e"/>
+    <text x="40" y="222">main</text>
+  </g>
+  <g stroke="#4ecdc4" stroke-width="3" fill="none">
+    <path d="M310 216 V 72"/>
+    <path d="M300 84 L310 70 L320 84"/>
+  </g>
+  <text x="330" y="150" fill="#4ecdc4" font-size="15">往上呼叫</text>
+  <g stroke="#feca57" stroke-width="3" fill="none">
+    <path d="M420 72 V 216"/>
+    <path d="M410 204 L420 218 L430 204"/>
+  </g>
+  <text x="330" y="176" fill="#feca57" font-size="15">往下回傳</text>
+</svg>

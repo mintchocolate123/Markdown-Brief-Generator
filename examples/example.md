@@ -1,93 +1,125 @@
-# 歡迎使用簡報生成器
-## 這是一個現代化的 HTML 簡報工具
+# 遞迴
+## 讓函式呼叫自己
 
-這是第一張投影片的內容。
+<pivot=c size=5>用階乘認識遞迴
 
-<size=5>你可以調整文字大小
-<color=purple>也可以改變顏色
-
----
-
-# Markdown 格式支援
-## 使用標準 Markdown 語法
-
-支援的功能：
-- 標題層級
-- 段落分隔
-- 特殊格式標記
-
-<ct>子標題範例
-
-<imp>這是重要訊息區塊
+<pivot=c color=gray>程式設計入門・第 7 週
 
 ---
 
-# 程式碼展示
-## 支援多種語言的語法高亮
+# 什麼是遞迴
+## 把大問題拆成同樣的小問題
+
+<ct>遞迴的兩個部分
+
+- 終止條件：
+<cont b color=yellow>問題小到可以直接回答
+- 遞迴呼叫：
+<cont b color=cyan>用更小的同一個問題呼叫自己
+
+<imp>每一次呼叫，問題都必須變得更小
+
+---
+
+## 什麼是遞迴（續）
+
+生活中的例子：
+
+- 查字典時，解釋裡又有看不懂的詞，就再去查那個詞
+- 打開俄羅斯娃娃，裡面還有一個更小的
+  - 直到最小的那個打不開為止
+  - 這個「打不開」就是終止條件
+
+---
+
+# 階乘
+## n! = n × (n-1)!
 
 ```py
-def hello_world():
-    print("Hello, World!")
-    return True
+def factorial(n):
+    if n <= 1:                    # 終止條件
+        return 1
+    return n * factorial(n - 1)   # 遞迴呼叫
 
-if __name__ == "__main__":
-    hello_world()
+print(factorial(5))               # 120
 ```
 
-支援的語言：C, C++, C#, Python, JavaScript, Java
+<ct>重點
+
+- 第 2、3 行是終止條件
+- 第 4 行用更小的 n 呼叫自己
 
 ---
 
-# 表格功能
-## 結構化資料展示
+# 呼叫過程
+## factorial(3) 怎麼算出來
+
+[tree]
+[width=full]
+[id=1] factorial(3)
+[id=2 p=1] 3 × factorial(2)
+[id=3 p=2] 2 × factorial(1)
+[id=4 p=3] <color=yellow>回傳 1
+[/tree]
+
+<pivot=c>碰到終止條件後，結果一路往回乘：1 → 2 → 6
+
+---
+
+# 呼叫堆疊
+## 每一層都在等下一層回傳
+
+<img=images/call-stack.svg,480,auto>
+
+- 每呼叫一次，堆疊就多疊一層
+- 碰到終止條件後，才一層一層往下回傳
+
+---
+
+# 遞迴還是迴圈
+## 同一個問題的兩種寫法
 
 [table]
-[width=400px]
-<imp>項目
-[c]<imp>說明
-Python
-[c]簡潔易學的程式語言
-JavaScript
-[c]網頁開發必備
-C++
-[c]高效能系統開發
+[width=full]
+<imp>比較
+[c]<imp>遞迴
+[c]<imp>迴圈
+寫法
+[c]貼近數學定義，通常較短
+[c]需要自己管理計數變數
+記憶體
+[c]每一層呼叫都佔用堆疊
+[c]通常比較省
+適合
+[c]樹狀結構、分而治之
+[c]單純的重複計算
 [/table]
 
 ---
 
-# 樹狀結構
-## 階層關係展示
+# 常見錯誤
+## 忘了讓問題變小
 
-[tree]
-[width=full]
-[id=1] <imp>程式語言
-[id=2 p=1] 編譯型語言
-[id=3 p=1] 直譯型語言
-[id=4 p=2] C/C++
-[id=5 p=2] Java
-[id=6 p=3] Python
-[id=7 p=3] JavaScript
-[/tree]
+```py
+def countdown(n):
+    print(n)
+    countdown(n - 1)   # 沒有終止條件，永遠不會停
+```
 
----
+<imp>Python 預設大約 1000 層後會停下來，出現
+<cont b color=red> RecursionError
 
-# 進階格式
-## 文字樣式與對齊
-
-<pivot=c size=6 color=orange>置中大標題
-
-<tab=2>縮排文字範例
-
-<b>粗體文字
-<i>斜體文字
-<u>底線文字
-<s>刪除線文字
-
-<link=https://github.com>點擊連結
+- 先寫終止條件，再寫遞迴呼叫
+- 確認每次呼叫的參數都更接近終止條件
 
 ---
 
-# 完成
-## 感謝觀看
+# 練習
+## 動手寫寫看
 
-<pivot=c size=5 color=cyan>簡報結束
+- 用遞迴計算 1 + 2 + … + n
+- 用遞迴把字串反轉
+  - 提示：把第一個字元放到最後
+- 挑戰：用遞迴算出費氏數列的第 n 項
+
+<pivot=c size=4 color=orange>下週：用遞迴走訪資料夾裡的所有檔案
