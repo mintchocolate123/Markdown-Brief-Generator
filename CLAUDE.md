@@ -6,8 +6,10 @@ Markdown 轉 HTML 簡報生成器。
 
 ```bash
 pip install -e . -r requirements-dev.txt
+python -m playwright install chromium               # e2e 測試用
 python -m pytest                                    # pyproject.toml 已設定 pythonpath=src,tools
 briefgen build -i examples/example.md -o out.html   # 等同 python -m briefgen
+briefgen watch examples/example.md --no-open         # 即時預覽
 python tools/migrate_syntax.py 舊.md -o 新.md
 ```
 
@@ -22,13 +24,20 @@ python tools/migrate_syntax.py 舊.md -o 新.md
    以 `[BLOCK_REF:key]` 佔位，並回傳每行的原始行索引；樹節點文字在這裡解析
 3. `tags.py`：`parse_format()` 是唯一的行首格式解析，段落、儲存格、樹節點共用；
    回傳 styles 與區塊層級欄位，錯誤不丟例外，而是放進 `warnings`
-4. `render/html.py`：`HTMLRenderer` 渲染段落（含 cont 接續）與區塊，
+4. `render/html.py`：`HTMLRenderer` 渲染段落（含 cont 接續、清單）與區塊（樹狀圖任意深度），
    警告依行號排序後交給 `warn` callback
 5. `generator.py`：`PresentationGenerator` 載入 Markdown、套用
    `templates/template.html`，把警告以 `檔名:行號: 訊息` 印到 stderr
 6. `cli.py` / `__main__.py`：`briefgen build` 與 `briefgen watch`（`python -m briefgen ...`）
 7. `watch.py`：即時預覽，輪詢修改時間 + `http.server`；live reload 只插在伺服器回應的頁面，
    寫到磁碟的 HTML 不含；生成失敗保留上一個成功的版本，只有警告時照常更新並在角落列出
+
+`templates/template.html` 除了版面，還負責瀏覽器端行為：
+- 按鍵（→ ← ↓ ↑ 空白 PageUp/PageDown Home End F B）、網址 hash `#N`（replaceState）、黑屏遮罩
+- `fitTrees()`：樹狀圖比卡片寬時以 `zoom` 等比例縮小
+- 列印：`@media print` 與 `html.print-layout` 由 Jinja macro `print_rules` 產生同一份規則；
+  `beforeprint` 套用列印版面後縮放樹狀圖與過高的投影片，`afterprint` 還原
+- `highlighter.py`：每個語言一組有順序的 token 規則（字串、註解等），不支援的語言不上色
 
 其他：
 - `launcher.py`、`start.bat` 留在根目錄，以 `python -m briefgen` 呼叫；未安裝套件時提示 `pip install -e .`
