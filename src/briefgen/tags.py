@@ -97,6 +97,18 @@ def split_token(token: str) -> Tuple[str, Optional[str]]:
     return name, value
 
 
+LIST_ITEM_RE = re.compile(r'^([ \t]*)- (.*)$')
+
+
+def split_list_item(line: str) -> Optional[Tuple[int, str]]:
+    """行首 "- " 為清單項目，回傳 (層級, 剩餘文字)；每 2 個空白或 1 個 Tab 多一層"""
+    match = LIST_ITEM_RE.match(line)
+    if not match:
+        return None
+    indent = match.group(1)
+    return indent.count('\t') + indent.count(' ') // 2, match.group(2)
+
+
 def find_closing(text: str) -> int:
     """找到雙引號外的第一個 >，找不到時回傳 -1"""
     in_quote = False

@@ -9,8 +9,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 from briefgen.parsing.blocks import MarkdownParser
 from briefgen.highlighter import SyntaxHighlighter
 from briefgen.model import Slide
-from briefgen.tags import BLOCK_FORMATS, parse_format
+from briefgen.tags import BLOCK_FORMATS, parse_format, split_list_item
 
+
+# 清單項目符號，依層級循環
+LIST_BULLETS = ('\u2022', '\u25e6', '\u25aa')
 
 # (投影片索引, 內容行索引, 訊息)
 WarnFunc = Callable[[int, int, str], None]
@@ -91,13 +94,25 @@ class HTMLRenderer:
         return '\n'.join(result)
     
     def _render_paragraph(self, lines: List[Tuple[int, str]]) -> str:
-        """渲染段落（cont 行接在上一行的 <div> 裡）"""
+        """渲染段落（cont 行接在上一行或上一個清單項目的 <div> 裡）"""
         entries = []  # (解析結果, 接續的 <span> 列表)
         
         for line_index, line in lines:
-            parsed = parse_format(line)
+            item = split_list_item(line)
+            if item is None and line.lstrip().startswith('\\-'):
+                line = line.lstrip()[1:]  # 行首 \- 是字面上的減號
+            parsed = parse_format(item[1] if item else line)
+            parsed['list_level'] = item[0] if item else None
             for warning in parsed['warnings']:
                 self._warn(line_index, warning)
+            
+            if item:
+                ignored = [name for name in parsed['formats'] if name in BLOCK_FORMATS or name == 'cont']
+                if ignored:
+                    self._warn(line_index, f'清單項目不支援 {"、".join(ignored)}，已忽略')
+                parsed['text'] = parsed['text'].strip()
+                entries.append((parsed, []))
+                continue
             
             if parsed['cont']:
                 if entries:
@@ -132,8 +147,23 @@ class HTMLRenderer:
             return text
         return f'<a href="{link}" target="_blank" style="color:#feca57;text-decoration:underline;">{text}</a>'
     
+    def _render_list_item(self, parsed: Dict[str, Any], continuation: str) -> str:
+        """渲染清單項目：項目符號與文字分開，換行時對齊文字（懸掛縮排）"""
+        level = parsed['list_level']
+        bullet = LIST_BULLETS[level % len(LIST_BULLETS)]
+        content = self._render_text_segment(parsed, always_span=False) + continuation
+        # 符號大小跟著該項文字（size），顏色維持白色
+        bullet_style = 'flex:none;width:1.2em'
+        if 'font-size' in parsed['styles']:
+            bullet_style += f';font-size:{parsed["styles"]["font-size"]}'
+        return (f'<div style="display:flex;align-items:baseline;margin-left:{(level + 1) * 2}em">'
+                f'<span style="{bullet_style}">{bullet}</span><div>{content}</div></div>')
+    
     def _render_formatted_line(self, parsed: Dict[str, Any], continuation: str = '') -> str:
         """渲染格式化的行，continuation 是接在文字後面的 cont 內容"""
+        if parsed['list_level'] is not None:
+            return self._render_list_item(parsed, continuation)
+        
         # 處理圖片
         if parsed['image']:
             img = parsed['image']

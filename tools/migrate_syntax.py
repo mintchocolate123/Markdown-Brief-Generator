@@ -160,6 +160,11 @@ def convert_leading_tags(text: str, report: Report, allow_square: bool) -> str:
     tokens: List[str] = []
     consumed = False
 
+    # 舊版會顯示反斜線；新語法的行首 \< 與（段落中的）\- 是跳脫字元
+    if rest.startswith('\\<') or (allow_square and rest.startswith('\\-')):
+        report.add(f'行首的 {rest[:2]} 在新語法會顯示為 {rest[1]}（舊版會顯示反斜線）')
+        return text
+
     openers = ('<', '[') if allow_square else ('<',)
     while rest and rest[0] in openers:
         end = find_tag_end(rest)

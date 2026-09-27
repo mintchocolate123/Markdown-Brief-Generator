@@ -34,7 +34,6 @@ def test_paragraph_tags(old, new):
 @pytest.mark.parametrize('line', [
     '普通文字',
     '<3 沒有結尾',
-    '\\<b> 跳脫',
     '# <b>標題不動',
     '## 副標題',
     '---',
@@ -191,6 +190,7 @@ FIXTURES = Path(__file__).resolve().parent / 'fixtures'
         '第 65 行: 移除樹節點的 imp',
         '第 66 行: 移除樹節點的 o<1/2>',
         '第 67 行: 移除樹節點的 o<2/2>',
+        '第 134 行: 行首的 \\- 在新語法會顯示為 -（舊版會顯示反斜線）',
     ]),
 ])
 def test_fixtures_convert_to_new_versions(name, expected_report):
@@ -206,3 +206,13 @@ def test_converting_new_fixtures_again_changes_nothing(name):
     assert text == new
     # 只可能再次出現「[...] 會顯示為文字」的提醒，不會移除任何內容
     assert not [line for line in report if '移除' in line]
+
+
+@pytest.mark.parametrize('line, char', [('\\<b>字面', '<'), ('\\- 字面', '-')])
+def test_leading_backslash_escape_is_reported(line, char):
+    assert one(line) == (line, [f'第 1 行: 行首的 \\{char} 在新語法會顯示為 {char}（舊版會顯示反斜線）'])
+
+
+def test_backslash_dash_in_table_cell_is_not_reported():
+    text = '[table]\n\\- 儲存格\n[/table]'
+    assert migrate(text) == (text, [])

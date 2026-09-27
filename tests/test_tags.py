@@ -2,7 +2,7 @@
 
 import pytest
 
-from briefgen.tags import normalize_color, parse_format
+from briefgen.tags import normalize_color, parse_format, split_list_item
 
 
 def fmt(line):
@@ -163,3 +163,26 @@ def test_backslash_elsewhere_is_kept():
 def test_normalize_color():
     assert normalize_color(' Purple ') == '#800080'
     assert normalize_color('#123') == '#123'
+
+
+
+# --- 清單 --------------------------------------------------------------------
+
+@pytest.mark.parametrize('line, expected', [
+    ('- 項目', (0, '項目')),
+    ('  - 項目', (1, '項目')),
+    ('    - 項目', (2, '項目')),
+    ('   - 項目', (1, '項目')),
+    ('\t- 項目', (1, '項目')),
+    ('\t\t- 項目', (2, '項目')),
+    ('\t  - 項目', (2, '項目')),
+    ('- <b>項目', (0, '<b>項目')),
+    ('- ', (0, '')),
+])
+def test_list_item(line, expected):
+    assert split_list_item(line) == expected
+
+
+@pytest.mark.parametrize('line', ['-項目', '---', '-- 項目', '\\- 項目', '項目 - 不是', '-\t項目'])
+def test_not_list_item(line):
+    assert split_list_item(line) is None
