@@ -216,3 +216,52 @@ def test_leading_backslash_escape_is_reported(line, char):
 def test_backslash_dash_in_table_cell_is_not_reported():
     text = '[table]\n\\- 儲存格\n[/table]'
     assert migrate(text) == (text, [])
+
+
+INLINE_HINT = '不會套用格式（只有行首的 <...> 有效），請手動拆成 cont 行'
+
+
+@pytest.mark.parametrize('line, converted, tags', [
+    ('<tab<1>>文字要用<color<yellow>>引號<cont>包起來', '<tab=1>文字要用<color<yellow>>引號<cont>包起來',
+     '<color<yellow>>、<cont>'),
+    ('<tab<1>>它的意思是：<b>把右邊的值</b>', '<tab=1>它的意思是：<b>把右邊的值</b>', '<b>、</b>'),
+    ('沒有行首格式<i>斜體', '沒有行首格式<i>斜體', '<i>'),
+    ('<b>新語法寫在行中<color=red>也無效', '<b>新語法寫在行中<color=red>也無效', '<color=red>'),
+    ('<b i>多個<size<5> b>項目', '<b i>多個<size<5> b>項目', '<size<5> b>'),
+])
+def test_inline_tags_are_reported_not_converted(line, converted, tags):
+    assert one(line) == (converted, [f'第 1 行: 行中間的 {tags} {INLINE_HINT}'])
+
+
+@pytest.mark.parametrize('line', [
+    'a < b > c',
+    'std::vector<int> v',
+    '<3 我愛你 <3',
+    'x <未知> y',
+    '# 標題 <b>不檢查',
+])
+def test_text_that_is_not_an_inline_tag(line):
+    assert one(line) == (line, [])
+
+
+def test_inline_tags_in_code_block_are_ignored():
+    text = '```html\n文字<b>粗體</b>\n```'
+    assert migrate(text) == (text, [])
+
+
+def test_list_item_leading_tag_is_converted_not_reported():
+    assert one('- <size<5>><b>大字') == ('- <size=5 b>大字', [])
+    assert one('  - 項目<b>行中') == ('  - 項目<b>行中', [f'第 1 行: 行中間的 <b> {INLINE_HINT}'])
+
+
+def test_inline_tags_in_cells_and_tree_nodes():
+    text, report = migrate('[table]\n[c]前<b>後\n[/table]\n[tree]\n[id<1>] 根<i>x\n[/tree]')
+    assert text == '[table]\n[c]前<b>後\n[/table]\n[tree]\n[id=1] 根<i>x\n[/tree]'
+    assert report == [f'第 2 行: 行中間的 <b> {INLINE_HINT}', f'第 5 行: 行中間的 <i> {INLINE_HINT}']
+
+
+def test_inline_tag_after_escaped_leading_bracket():
+    assert one('\\<b> 與 <i>斜體')[1] == [
+        '第 1 行: 行首的 \\< 在新語法會顯示為 <（舊版會顯示反斜線）',
+        f'第 1 行: 行中間的 <i> {INLINE_HINT}',
+    ]

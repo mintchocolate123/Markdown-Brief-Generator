@@ -153,6 +153,33 @@ def is_known_bracket(fmt: str) -> bool:
     return bool(items) and all(convert_format_item(item) is not None for item in items)
 
 
+INLINE_TAG_START = re.compile(r'<(?=[A-Za-z/])')
+LIST_MARKER_RE = re.compile(r'^([ \t]*- )(.*)$')
+
+
+def report_inline_tags(text: str, report: Report) -> None:
+    """行首格式之後出現的已知標籤不會套用，列入報告（不自動轉換）"""
+    found = []
+    covered = 0
+    for match in INLINE_TAG_START.finditer(text):
+        start = match.start()
+        if start < covered:
+            continue  # 在上一個標籤裡面，例如 <color<yellow>> 的 <yellow>
+        end = find_tag_end(text[start:])
+        if end == -1:
+            continue
+        tag = text[start:start + end + 1]
+        items = split_items(tag[1:-1])
+        first = items[0].lstrip('/') if items else ''
+        item = OLD_ITEM_RE.match(first) or NEW_ITEM_RE.match(first)
+        name = item.group(1) if item else first
+        if name in FLAG_NAMES or name in ARG_PATTERNS:
+            found.append(tag)
+            covered = start + end + 1
+    if found:
+        report.add(f'行中間的 {"、".join(found)} 不會套用格式（只有行首的 <...> 有效），請手動拆成 cont 行')
+
+
 def convert_leading_tags(text: str, report: Report, allow_square: bool) -> str:
     """把行首連續的舊版標記合併為一個新語法標記"""
     indent = text[:len(text) - len(text.lstrip())]
@@ -163,6 +190,7 @@ def convert_leading_tags(text: str, report: Report, allow_square: bool) -> str:
     # 舊版會顯示反斜線；新語法的行首 \< 與（段落中的）\- 是跳脫字元
     if rest.startswith('\\<') or (allow_square and rest.startswith('\\-')):
         report.add(f'行首的 {rest[:2]} 在新語法會顯示為 {rest[1]}（舊版會顯示反斜線）')
+        report_inline_tags(rest[2:], report)
         return text
 
     openers = ('<', '[') if allow_square else ('<',)
@@ -181,6 +209,7 @@ def convert_leading_tags(text: str, report: Report, allow_square: bool) -> str:
         if rest.lstrip()[:1] in openers:
             rest = rest.lstrip()
 
+    report_inline_tags(rest, report)
     if not consumed:
         return text
     if not tokens:
@@ -271,7 +300,12 @@ def migrate_slide(lines: List[str], offset: int, report: Report) -> List[str]:
         block = CODE_BLOCK if stripped.startswith('```') else BLOCKS.get(stripped)
         end = find_block_end(lines, i, block[0]) if block else -1
         if end == -1:
-            out[i] = convert_leading_tags(line, report, allow_square=True)
+            # 清單項目 "- " 後面的格式也是行首格式
+            list_item = LIST_MARKER_RE.match(line)
+            if list_item:
+                out[i] = list_item.group(1) + convert_leading_tags(list_item.group(2), report, allow_square=False)
+            else:
+                out[i] = convert_leading_tags(line, report, allow_square=True)
             i += 1
             continue
 
