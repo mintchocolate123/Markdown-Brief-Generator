@@ -4,6 +4,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# 測試結束後才印出的 GitHub Actions 訊息（測試執行中 stdout 會被 pytest 擷取）
+GITHUB_NOTICES = []
+
 
 def open_slides(page, html):
     """開啟簡報並關閉淡入動畫"""

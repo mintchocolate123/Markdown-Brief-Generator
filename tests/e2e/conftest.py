@@ -18,6 +18,12 @@ def _unavailable(reason):
     pytest.skip(reason)
 
 
+def pytest_terminal_summary(terminalreporter):
+    from .helpers import GITHUB_NOTICES
+    for notice in GITHUB_NOTICES:
+        terminalreporter.write_line(notice)
+
+
 @pytest.fixture(scope='session')
 def browser():
     try:
