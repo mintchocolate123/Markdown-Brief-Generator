@@ -55,6 +55,77 @@ class SyntaxHighlighter:
             'num': '#6897bb',
             'bg': '#2b2b2b',
         },
+        'bash': {
+            'kw': '#569cd6',
+            'str': '#ce9178',
+            'cmt': '#6a9955',
+            'num': '#b5cea8',
+            'var': '#9cdcfe',
+            'bg': '#1e1e1e',
+        },
+        'html': {
+            'kw': '#569cd6',
+            'str': '#ce9178',
+            'cmt': '#6a9955',
+            'num': '#b5cea8',
+            'attr': '#9cdcfe',
+            'bg': '#1e1e1e',
+        },
+        'css': {
+            'kw': '#d7ba7d',
+            'str': '#ce9178',
+            'cmt': '#6a9955',
+            'num': '#b5cea8',
+            'attr': '#9cdcfe',
+            'bg': '#1e1e1e',
+        },
+        'json': {
+            'kw': '#569cd6',
+            'str': '#ce9178',
+            'cmt': '#6a9955',
+            'num': '#b5cea8',
+            'attr': '#9cdcfe',
+            'bg': '#1e1e1e',
+        },
+    }
+    
+    # 各語言依序套用的規則：(正規表示式, 顏色, flags)；規則比對的是 HTML 轉義後的程式碼
+    DOUBLE_QUOTED = (r'"[^"\\]*(?:\\.[^"\\]*)*"', 'str', 0)
+    SINGLE_QUOTED = (r"'[^'\\]*(?:\\.[^'\\]*)*'", 'str', 0)
+    LINE_COMMENT = (r'//.*$', 'cmt', re.MULTILINE)
+    HASH_COMMENT = (r'#.*$', 'cmt', re.MULTILINE)
+    BLOCK_COMMENT = (r'/\*.*?\*/', 'cmt', re.DOTALL)
+    
+    LANG_RULES = {
+        'c': [DOUBLE_QUOTED, SINGLE_QUOTED, LINE_COMMENT],
+        'cpp': [DOUBLE_QUOTED, SINGLE_QUOTED, LINE_COMMENT],
+        'cs': [DOUBLE_QUOTED, SINGLE_QUOTED, LINE_COMMENT],
+        'js': [DOUBLE_QUOTED, SINGLE_QUOTED, LINE_COMMENT],
+        'java': [DOUBLE_QUOTED, SINGLE_QUOTED, LINE_COMMENT],
+        'py': [DOUBLE_QUOTED, SINGLE_QUOTED, HASH_COMMENT],
+        'bash': [
+            DOUBLE_QUOTED, SINGLE_QUOTED,
+            (r'(?<![\w$])#.*$', 'cmt', re.MULTILINE),
+            (r'\$\{?[A-Za-z_][A-Za-z0-9_]*\}?|\$[0-9@#?*]', 'var', 0),
+        ],
+        'html': [
+            (r'&lt;!--.*?--&gt;', 'cmt', re.DOTALL),
+            DOUBLE_QUOTED, SINGLE_QUOTED,
+            (r'(?<=&lt;)/?[A-Za-z][\w-]*', 'kw', 0),
+            (r'[A-Za-z_:][\w:.-]*(?==)', 'attr', 0),
+        ],
+        'css': [
+            BLOCK_COMMENT, DOUBLE_QUOTED, SINGLE_QUOTED,
+            (r'^\s*[\w-]+(?=\s*:(?![^\n]*\{))', 'attr', re.MULTILINE),
+            (r'#[0-9A-Fa-f]{3,8}\b', 'num', 0),
+            # 數值與單位（排除佔位符 \x01編號\x01 裡的數字）
+            (r'(?<![\w#.\x01-])-?\d*\.?\d+(?:[A-Za-z]+|%)?(?!\x01)', 'num', 0),
+            (r'^[^{}\n]+(?=\{)', 'kw', re.MULTILINE),
+        ],
+        'json': [
+            (r'"[^"\\]*(?:\\.[^"\\]*)*"(?=\s*:)', 'attr', 0),
+            DOUBLE_QUOTED,
+        ],
     }
     
     # 各語言的關鍵字
@@ -104,6 +175,12 @@ class SyntaxHighlighter:
             'static', 'System', 'out', 'println',
             'final', 'abstract', 'extends', 'implements',
         ],
+        'bash': [
+            'if', 'then', 'else', 'elif', 'fi', 'for', 'while', 'until',
+            'do', 'done', 'case', 'esac', 'in', 'function', 'return',
+            'echo', 'export', 'local', 'source', 'exit', 'cd',
+        ],
+        'json': ['true', 'false', 'null'],
     }
     
     def highlight(self, code: str, lang: str) -> Tuple[str, str]:
@@ -136,32 +213,13 @@ class SyntaxHighlighter:
             placeholders.append(html)
             return f'\x00\x01{placeholder_id}\x01\x00'
         
-        # 1. 處理字串（最高優先級）
-        code = re.sub(
-            r'"[^"\\]*(?:\\.[^"\\]*)*"',
-            lambda m: save_placeholder(m, colors['str']),
-            code
-        )
-        code = re.sub(
-            r"'[^'\\]*(?:\\.[^'\\]*)*'",
-            lambda m: save_placeholder(m, colors['str']),
-            code
-        )
-        
-        # 2. 處理註解
-        code = re.sub(
-            r'//.*$',
-            lambda m: save_placeholder(m, colors['cmt']),
-            code,
-            flags=re.MULTILINE
-        )
-        
-        if lang == 'py':
+        # 1-2. 依序處理字串、註解等（以佔位符保護，後面的規則不會再改到）
+        for pattern, color, flags in self.LANG_RULES[lang]:
             code = re.sub(
-                r'#.*$',
-                lambda m: save_placeholder(m, colors['cmt']),
+                pattern,
+                lambda m, color=color: save_placeholder(m, colors[color]),
                 code,
-                flags=re.MULTILINE
+                flags=flags
             )
         
         # 3. 處理數字

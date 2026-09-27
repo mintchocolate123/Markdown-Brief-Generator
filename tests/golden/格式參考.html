@@ -415,7 +415,7 @@ const data = {a: 1, b: 2, c: 3};</div><pre style="margin:0;white-space:pre-wrap;
     <span style="color:#ff79c6;font-weight:bold">if</span> <span style="color:#ff79c6;font-weight:bold">len</span>(arr) &lt;= <span style="color:#bd93f9">1</span>:
         <span style="color:#ff79c6;font-weight:bold">return</span> arr
     
-    pivot = arr[<span style="color:#ff79c6;font-weight:bold">len</span>(arr) <span style="color:#6272a4">// 2]</span>
+    pivot = arr[<span style="color:#ff79c6;font-weight:bold">len</span>(arr) // <span style="color:#bd93f9">2</span>]
     left = [x <span style="color:#ff79c6;font-weight:bold">for</span> x <span style="color:#ff79c6;font-weight:bold">in</span> arr <span style="color:#ff79c6;font-weight:bold">if</span> x &lt; pivot]
     middle = [x <span style="color:#ff79c6;font-weight:bold">for</span> x <span style="color:#ff79c6;font-weight:bold">in</span> arr <span style="color:#ff79c6;font-weight:bold">if</span> x == pivot]
     right = [x <span style="color:#ff79c6;font-weight:bold">for</span> x <span style="color:#ff79c6;font-weight:bold">in</span> arr <span style="color:#ff79c6;font-weight:bold">if</span> x &gt; pivot]

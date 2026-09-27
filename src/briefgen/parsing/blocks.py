@@ -24,6 +24,9 @@ class MarkdownParser:
         'c#': 'cs',
         'python': 'py',
         'javascript': 'js',
+        'sh': 'bash',
+        'shell': 'bash',
+        'htm': 'html',
     }
     
     def __init__(self):
@@ -115,7 +118,7 @@ class MarkdownParser:
         first_line = lines[start].strip()
         
         # 提取語言標識
-        lang_match = re.match(r'```(\w+)?', first_line)
+        lang_match = re.match(r'```([\w+#-]+)?', first_line)
         lang = lang_match.group(1) if lang_match and lang_match.group(1) else 'text'
         
         data_lines, width, end = self._collect_block(lines, start, '```')
