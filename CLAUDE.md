@@ -41,6 +41,8 @@ python tools/migrate_syntax.py 舊.md -o 新.md
 - `tests/fixtures/old/` 是舊語法版本，轉換後必須等於 `fixtures/new/`
 - 改變輸出時，先列出 golden diff 給使用者確認，再重新產生 golden
 - `docs/格式參考.md` 與 `examples/example.md` 生成時不可有警告
+- `tests/e2e/`：playwright（Python）瀏覽器端測試；沒有瀏覽器時自動 skip，
+  CI 設 `BRIEFGEN_REQUIRE_E2E=1` 讓它改為失敗。瀏覽器行為（按鍵、縮放、列印、watch）都在這裡驗證
 
 ## 限制
 

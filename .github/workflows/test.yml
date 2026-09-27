@@ -27,5 +27,15 @@ jobs:
       - name: Install dev requirements
         run: python -m pip install -r requirements-dev.txt
 
+      - name: Install Chromium for browser tests (Linux)
+        if: runner.os == 'Linux'
+        run: python -m playwright install --with-deps chromium
+
+      - name: Install Chromium for browser tests (Windows)
+        if: runner.os == 'Windows'
+        run: python -m playwright install chromium
+
       - name: Run tests
         run: python -m pytest
+        env:
+          BRIEFGEN_REQUIRE_E2E: "1"
