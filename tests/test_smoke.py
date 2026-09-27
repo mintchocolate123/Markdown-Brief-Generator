@@ -1,5 +1,6 @@
 """以子行程實際執行 CLI 與啟動器，模擬繁體中文 Windows 的終端編碼（cp950）"""
 
+import importlib.util
 import os
 import shutil
 import subprocess
@@ -84,3 +85,17 @@ def _cp950_encodable(char):
     except UnicodeEncodeError:
         return False
     return True
+
+
+def test_launcher_open_file_uses_file_uri(work_dir, monkeypatch):
+    spec = importlib.util.spec_from_file_location('launcher', ROOT / 'launcher.py')
+    launcher = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(launcher)
+    opened = []
+    monkeypatch.setattr(launcher.webbrowser, 'open', opened.append)
+    monkeypatch.chdir(work_dir)
+
+    launcher.open_file('輸出 結果.html')
+
+    assert opened == [(work_dir / '輸出 結果.html').as_uri()]
+    assert opened[0].startswith('file:///') and '%20' in opened[0]

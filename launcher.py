@@ -8,6 +8,7 @@ import importlib.util
 import os
 import sys
 import subprocess
+import webbrowser
 from pathlib import Path
 
 
@@ -35,12 +36,9 @@ def run_generator(*args):
 
 
 def open_file(filepath):
-    """開啟檔案"""
+    """以預設瀏覽器開啟檔案"""
     path = get_absolute_path(filepath)
-    if os.name == 'nt':
-        os.startfile(str(path))
-    else:
-        subprocess.run(['open', str(path)])
+    webbrowser.open(path.as_uri())
 
 
 def build_from_markdown():
