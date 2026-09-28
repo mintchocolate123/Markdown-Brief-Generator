@@ -12,10 +12,13 @@ from pathlib import Path
 
 
 def use_utf8_output():
-    """stdout/stderr 改用 UTF-8，不依賴系統編碼（未安裝 briefgen 時也要能執行）"""
+    """stdout/stderr 改用 UTF-8，不依賴系統編碼（未安裝 briefgen 時也要能執行）；
+    輸入無法解碼的字元以替代字元處理，不讓啟動器當掉"""
     for stream in (sys.stdout, sys.stderr):
         if hasattr(stream, 'reconfigure'):
             stream.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stdin, 'reconfigure'):
+        sys.stdin.reconfigure(errors='replace')
 
 
 def main():

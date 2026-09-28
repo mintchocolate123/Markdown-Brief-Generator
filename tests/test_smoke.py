@@ -123,6 +123,15 @@ def test_launcher_dropped_non_markdown_returns_to_menu(work_dir):
     assert '[FAIL] 只能選擇 .md 檔' in out and '[1] 開啟 / 生成簡報' in out
 
 
+def test_launcher_survives_undecodable_input(work_dir):
+    result = subprocess.run([sys.executable, str(ROOT / 'launcher.py')], cwd=work_dir,
+                            env=launcher_env(work_dir), input=b'\xff\x9b\n9\n\xff\n0\n',
+                            capture_output=True, timeout=60)
+    assert result.returncode == 0, result.stderr.decode('utf-8', 'replace')
+    assert 'Traceback' not in result.stderr.decode('utf-8', 'replace')
+    assert '謝謝使用' in result.stdout.decode('utf-8')
+
+
 def test_start_bat_passes_dropped_files_to_launcher():
     assert '"%~dp0launcher.py" %*' in (ROOT / 'start.bat').read_text(encoding='ascii')
 

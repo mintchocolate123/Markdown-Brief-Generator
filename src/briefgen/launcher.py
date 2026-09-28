@@ -564,12 +564,17 @@ def handle_dropped(args: List[str], config: dict) -> None:
 def main(repo: Path, args: Optional[List[str]] = None) -> None:
     config = load_config()
     try:
-        if ensure_brief_dir(config):
-            print(f'已建立簡報資料夾：{brief_dir(config)}')
-            print('之後新增的簡報都會放在這裡，可以在「設定」修改位置。')
-            pause()
-        if args:
-            handle_dropped(args, config)
+        try:
+            if ensure_brief_dir(config):
+                print(f'已建立簡報資料夾：{brief_dir(config)}')
+                print('之後新增的簡報都會放在這裡，可以在「設定」修改位置。')
+                pause()
+            if args:
+                handle_dropped(args, config)
+        except (EOFError, KeyboardInterrupt):
+            raise
+        except Exception as error:  # 啟動時的錯誤也顯示訊息後進入選單
+            print(f'\n[FAIL] 發生錯誤：{type(error).__name__}: {error}')
         while True:
             show_menu(config)
             try:
