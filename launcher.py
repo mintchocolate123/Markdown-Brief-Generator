@@ -1,154 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-啟動器 - 支援路徑切換的中文互動式介面
+啟動器入口：確認已安裝 briefgen 後開啟中文選單（主程式在 src/briefgen/launcher.py）
+
+把 .md 檔拖到 start.bat 上時，檔案路徑會當成參數傳進來，直接開始即時預覽。
 """
 
 import importlib.util
-import os
 import sys
-import subprocess
-import webbrowser
 from pathlib import Path
-
-
-def clear_screen():
-    """清除螢幕"""
-    os.system('cls' if os.name == 'nt' else 'clear')
-
-
-def get_absolute_path(path_str):
-    """取得絕對路徑"""
-    path = Path(path_str).expanduser()
-    if path.is_absolute():
-        return path
-    else:
-        return Path.cwd() / path
-
-
-def run_generator(*args):
-    """以 python -m briefgen 執行生成器"""
-    try:
-        result = subprocess.run([sys.executable, '-m', 'briefgen', *args], check=True)
-        return result.returncode == 0
-    except subprocess.CalledProcessError:
-        return False
-
-
-def open_file(filepath):
-    """以預設瀏覽器開啟檔案"""
-    path = get_absolute_path(filepath)
-    webbrowser.open(path.as_uri())
-
-
-def ask_markdown_path(title):
-    """顯示標題並詢問 Markdown 檔案路徑；路徑不合法時回傳 None"""
-    clear_screen()
-    print("=" * 50)
-    print(f"    {title}")
-    print("=" * 50)
-    print()
-    print("提示：可以使用完整路徑或相對路徑")
-    print("範例：")
-    print("  - 當前目錄：example.md")
-    print("  - 上層目錄：../slides/my_slides.md")
-    print("  - 完整路徑：C:\\Users\\Name\\slides.md")
-    print()
-    
-    input_file = input("請輸入 Markdown 檔案路徑: ").strip().strip('"')
-    if not input_file:
-        print("錯誤：檔案名稱不能為空")
-        input("\n按 Enter 繼續...")
-        return None
-    
-    input_path = get_absolute_path(input_file)
-    if not input_path.exists():
-        print(f"錯誤：找不到檔案")
-        print(f"尋找路徑：{input_path}")
-        input("\n按 Enter 繼續...")
-        return None
-    
-    return input_path
-
-
-def build_from_markdown():
-    """從 Markdown 生成簡報"""
-    input_path = ask_markdown_path("從 Markdown 生成簡報")
-    if input_path is None:
-        return
-    
-    # 預設輸出與輸入同目錄
-    default_output = input_path.parent / f"{input_path.stem}_output.html"
-    
-    output_file = input(f"輸出檔案 [預設: {default_output.name}]: ").strip().strip('"')
-    if not output_file:
-        output_path = default_output
-    else:
-        output_path = get_absolute_path(output_file)
-    
-    print(f"\n生成中...")
-    print(f"來源：{input_path}")
-    print(f"輸出：{output_path}\n")
-    
-    if run_generator('build', '-i', str(input_path), '-o', str(output_path)):
-        print("\n[OK] 完成！")
-        if input("\n開啟簡報？(y/n): ").strip().lower() == 'y':
-            open_file(output_path)
-    else:
-        print("\n[FAIL] 失敗")
-    
-    input("\n按 Enter 繼續...")
-
-
-def live_preview():
-    """即時預覽：存檔後自動重新生成；Ctrl+C 結束並回到選單"""
-    input_path = ask_markdown_path("即時預覽")
-    if input_path is None:
-        return
-    
-    print("\n啟動即時預覽，存檔後瀏覽器會自動更新")
-    print("按 Ctrl+C 結束預覽並回到選單\n", flush=True)
-    process = subprocess.Popen([sys.executable, '-m', 'briefgen', 'watch', str(input_path)])
-    try:
-        process.wait()
-    except KeyboardInterrupt:
-        # Ctrl+C 同時送給 watch，等它自己結束
-        try:
-            process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            process.kill()
-    
-    print("\n已結束即時預覽，回到選單")
-    input("\n按 Enter 繼續...")
-
-
-def generate_example():
-    """生成範例"""
-    clear_screen()
-    print("=" * 50)
-    print("    生成範例簡報")
-    print("=" * 50)
-    print()
-    
-    script_dir = Path(__file__).parent
-    example = script_dir / 'examples' / 'example.md'
-    output = Path.cwd() / 'example_output.html'
-    
-    if not example.exists():
-        print("找不到 examples/example.md")
-        input("\n按 Enter 繼續...")
-        return
-    
-    print(f"輸出：{output}\n")
-    
-    if run_generator('build', '-i', str(example), '-o', str(output), '--title', '範例'):
-        print("\n[OK] 完成！")
-        if input("\n開啟？(y/n): ").strip().lower() == 'y':
-            open_file(output)
-    else:
-        print("\n[FAIL] 失敗")
-    
-    input("\n按 Enter 繼續...")
 
 
 def use_utf8_output():
@@ -159,42 +19,18 @@ def use_utf8_output():
 
 
 def main():
-    """主選單"""
     use_utf8_output()
-    
     if importlib.util.find_spec('briefgen') is None:
         print("找不到 briefgen 套件，請先在工具目錄執行一次：")
         print()
         print("    pip install -e .")
-        input("\n按 Enter 結束...")
+        try:
+            input("\n按 Enter 結束...")
+        except EOFError:
+            pass
         return
-    
-    from briefgen import __version__
-    
-    while True:
-        clear_screen()
-        print("=" * 50)
-        print(f"    HTML 簡報生成器 v{__version__}")
-        print("=" * 50)
-        print(f"\n當前目錄: {Path.cwd()}\n")
-        print("[1] 從 Markdown 生成簡報")
-        print("[2] 生成範例")
-        print("[3] 即時預覽")
-        print("[0] 結束")
-        print()
-        
-        choice = input("選擇 (0-3): ").strip()
-        
-        if choice == '1':
-            build_from_markdown()
-        elif choice == '2':
-            generate_example()
-        elif choice == '3':
-            live_preview()
-        elif choice == '0':
-            clear_screen()
-            print("\n謝謝使用！\n")
-            break
+    from briefgen.launcher import main as run
+    run(Path(__file__).resolve().parent, sys.argv[1:])
 
 
 if __name__ == '__main__':

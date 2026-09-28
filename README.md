@@ -12,7 +12,7 @@
 pip install -e .
 ```
 
-Windows 也可以雙擊 `start.bat`，用中文選單操作。
+Windows 也可以雙擊 `start.bat`，用中文選單操作：簡報集中放在「文件」資料夾底下的 `brief`，每份簡報一個資料夾，圖片放在裡面的 `images`。把 .md 檔拖到 `start.bat` 上會直接開始即時預覽。
 
 ## 30 秒上手
 

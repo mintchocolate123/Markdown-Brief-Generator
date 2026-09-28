@@ -40,7 +40,11 @@ python tools/migrate_syntax.py 舊.md -o 新.md
 - `highlighter.py`：每個語言一組有順序的 token 規則（字串、註解等），不支援的語言不上色
 
 其他：
-- `launcher.py`、`start.bat` 留在根目錄，以 `python -m briefgen` 呼叫；未安裝套件時提示 `pip install -e .`
+- `launcher.py`、`start.bat` 留在根目錄：`launcher.py` 只是入口（UTF-8 輸出、檢查是否安裝），
+  主程式在 `src/briefgen/launcher.py`；生成與預覽以子行程呼叫 `python -m briefgen`，`start.bat` 以 `%*` 傳入拖曳的檔案
+- 啟動器的簡報資料夾預設為「文件」下的 `brief`（Windows 用 SHGetKnownFolderPath、Linux 用 XDG），
+  設定檔在 `~/.briefgen/launcher.json`；測試以 `BRIEFGEN_HOME`、`BRIEFGEN_DOCUMENTS` 換成暫存資料夾，
+  `BRIEFGEN_NO_GUI=1` 不開 tkinter 視窗，絕不寫入真正的使用者資料夾
 - 版本號只寫在 `src/briefgen/__init__.py` 的 `__version__`，pyproject 與 launcher 由此讀取
 - `tools/migrate_syntax.py`：舊語法轉換，已是新語法的內容不變（可重複執行）
 - `examples/example.md` 是教學風格的範例簡報，`examples/template.md` 是空白範本，圖片放 `examples/images/`
