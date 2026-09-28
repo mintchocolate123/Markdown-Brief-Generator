@@ -22,8 +22,9 @@ def pytest_terminal_summary(terminalreporter):
     """測試結束後印出 GitHub Actions 的 notice；直接寫 UTF-8，避免 Windows 終端編碼把中文跳脫"""
     import sys
     from .helpers import GITHUB_NOTICES
+    # 先換行：pytest 的進度點可能還在同一行，workflow 指令必須在行首才會被辨識
     for notice in GITHUB_NOTICES:
-        sys.stdout.buffer.write((notice + '\n').encode('utf-8'))
+        sys.stdout.buffer.write(('\n' + notice + '\n').encode('utf-8'))
     sys.stdout.flush()
 
 
