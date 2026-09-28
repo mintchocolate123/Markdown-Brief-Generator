@@ -75,6 +75,7 @@ def test_launcher_build_saves_html_next_to_markdown(work_dir):
 
     html = source.with_suffix('.html')
     assert f'[OK] 已生成：{html}' in out
+    assert out.count('[OK]') == 1  # 只顯示一次成功訊息
     assert html.exists()
     assert list(work_dir.rglob('*_output.html')) == []
     config = json.loads((work_dir / '家' / '.briefgen' / 'launcher.json').read_text(encoding='utf-8'))

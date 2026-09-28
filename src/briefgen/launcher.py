@@ -171,7 +171,8 @@ def backup_path(md: Path) -> Path:
 # --- 外部程式 ------------------------------------------------------------------
 
 def run_briefgen(*args: str) -> bool:
-    return subprocess.run([sys.executable, '-m', 'briefgen', *args]).returncode == 0
+    """執行 briefgen；它自己的成功訊息不顯示（由啟動器統一顯示），警告與錯誤照常印出"""
+    return subprocess.run([sys.executable, '-m', 'briefgen', *args], stdout=subprocess.DEVNULL).returncode == 0
 
 
 def build(md: Path, output: Optional[Path] = None) -> Optional[Path]:
