@@ -38,7 +38,6 @@ def factorial(n):
     if n <= 1:                    # 終止條件
         return 1
     return n * factorial(n - 1)   # 遞迴呼叫
-
 print(factorial(5))               # 120
 ```
 
@@ -54,10 +53,9 @@ print(factorial(5))               # 120
 
 [tree]
 [width=full]
-[id=1] factorial(3)
-[id=2 p=1] 3 × factorial(2)
-[id=3 p=2] 2 × factorial(1)
-[id=4 p=3] <color=yellow>回傳 1
+[id=1] 3 × factorial(2)
+[id=2 p=1] 2 × factorial(1)
+[id=3 p=2] <color=yellow>回傳 1
 [/tree]
 
 <pivot=c>碰到終止條件後，結果一路往回乘：1 → 2 → 6

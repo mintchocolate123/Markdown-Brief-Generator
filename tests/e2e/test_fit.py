@@ -1,4 +1,4 @@
-"""寫作慣例：簡報的每一頁在 1280×720（16:9 全螢幕）扣掉導覽列後不需要捲動"""
+"""寫作慣例：簡報的每一頁在 1280×720（16:9 全螢幕）扣掉導覽列後不需要捲動，並保留安全餘裕"""
 
 import os
 
@@ -9,6 +9,9 @@ from briefgen.parsing.slides import parse_markdown_slides
 from .helpers import GITHUB_NOTICES, ROOT, open_slides
 
 VIEWPORT = {'width': 1280, 'height': 720}
+
+# 每頁至少保留的高度；字型不同（本機 / Linux 的文泉驛正黑、Windows 的微軟正黑體）會差幾 px
+MIN_MARGIN = 20
 
 
 def is_deck(path):
@@ -61,6 +64,6 @@ def test_every_slide_fits_1280x720(page, build, path):
     open_slides(page, build(ROOT / path))
     margins = page.evaluate(MARGINS)
     _report_on_github(path, _used_fonts(page), margins)
-    overflow = [f"{path} 第 {m['page']} 頁（{m['title']}）超出 {-m['margin']}px"
-                for m in margins if m['margin'] < 0]
-    assert overflow == []
+    tight = [f"{path} 第 {m['page']} 頁（{m['title']}）餘裕 {m['margin']}px，至少要 {MIN_MARGIN}px"
+             for m in margins if m['margin'] < MIN_MARGIN]
+    assert tight == []
