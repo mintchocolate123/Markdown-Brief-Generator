@@ -316,37 +316,68 @@
             goToSlide(currentIndex + direction);
         }
         
+        // 複製程式碼：先用 Clipboard API，不存在或失敗時退回 textarea + execCommand；
+        // 兩種都失敗時顯示「複製失敗」並選取程式碼，讓使用者自己按 Ctrl+C。任何情況都要有回饋
         function copyCode(codeId) {
             const codeElement = document.getElementById('code' + codeId);
             const btn = document.getElementById('copyBtn' + codeId);
-            
-            if (!codeElement) return;
+            if (!codeElement || !btn) return;
             
             // 取得原始程式碼（解碼 HTML 實體）
             const code = codeElement.textContent;
+            const finish = ok => showCopyResult(btn, codeElement, ok);
             
-            // 複製到剪貼簿
-            navigator.clipboard.writeText(code).then(() => {
-                // 成功提示
-                const originalText = btn.textContent;
-                btn.textContent = '已複製';
-                btn.style.background = '#00d4aa';
-                
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.style.background = '#4ecdc4';
-                }, 2000);
-            }).catch(err => {
-                // 失敗提示
-                console.error('複製失敗:', err);
-                btn.textContent = '複製失敗';
-                btn.style.background = '#ff6b6b';
-                
-                setTimeout(() => {
-                    btn.textContent = '複製';
-                    btn.style.background = '#4ecdc4';
-                }, 2000);
-            });
+            try {
+                let pending = null;
+                if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                    pending = navigator.clipboard.writeText(code);
+                }
+                if (pending && typeof pending.then === 'function') {
+                    pending.then(() => finish(true), () => finish(copyWithTextarea(code)));
+                } else {
+                    finish(copyWithTextarea(code));
+                }
+            } catch (error) {
+                // writeText 本身丟出例外（例如權限被擋）
+                finish(copyWithTextarea(code));
+            }
+        }
+        
+        function copyWithTextarea(code) {
+            const textarea = document.createElement('textarea');
+            textarea.value = code;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'fixed';
+            textarea.style.top = '0';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            let ok = false;
+            try {
+                textarea.select();
+                ok = document.execCommand('copy');
+            } catch (error) {
+                ok = false;
+            }
+            document.body.removeChild(textarea);
+            return ok;
+        }
+        
+        function showCopyResult(btn, codeElement, ok) {
+            btn.textContent = ok ? '已複製' : '複製失敗';
+            btn.style.background = ok ? '#00d4aa' : '#ff6b6b';
+            if (!ok) {
+                // 選取畫面上的程式碼（隱藏原始碼的下一個元素），讓使用者直接按 Ctrl+C
+                const range = document.createRange();
+                range.selectNodeContents(codeElement.nextElementSibling);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+            clearTimeout(btn.resetTimer);
+            btn.resetTimer = setTimeout(() => {
+                btn.textContent = '複製';
+                btn.style.background = '#4ecdc4';
+            }, 2000);
         }
         
         // 翻頁器送 PageUp / PageDown

@@ -40,6 +40,8 @@ class HTMLRenderer:
         self.highlighter = SyntaxHighlighter()
         self._warn_func = warn
         self._warnings: List[Tuple[int, str]] = []
+        # 程式碼區塊依出現順序編號（同一個 renderer 渲染整份簡報，所以整份唯一）
+        self._code_count = 0
     
     def _warn(self, line_index: int, message: str) -> None:
         self._warnings.append((line_index, message))
@@ -300,9 +302,9 @@ class HTMLRenderer:
         # 語言標籤顯示
         lang_display = lang.upper()
         
-        # 生成唯一 ID 供複製功能使用
-        import hashlib
-        code_id = hashlib.md5(code.encode()).hexdigest()[:8]
+        # 複製功能用的 ID：依出現順序編號，內容相同的區塊也不會重複
+        self._code_count += 1
+        code_id = str(self._code_count)
         
         # 儲存原始程式碼（轉義後）供複製使用
         code_escaped = code.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;').replace("'", '&#39;')
