@@ -11,7 +11,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # ubuntu-latest 從 2026-10-19 起指向 Ubuntu 26，字型可能換掉而改變 e2e 的尺寸量測，
+        # 所以固定版本（理由見 docs/開發.md 的 CI 一節）
+        os: [ubuntu-24.04, windows-latest]
         python-version: ["3.11", "3.12"]
 
     steps:

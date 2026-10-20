@@ -60,13 +60,18 @@ def open_deck(context, html, *init_scripts):
 
 
 def clipboard_text(context, html):
-    """用另一個沒有被修改的頁面讀剪貼簿（file:// 是安全環境，about:blank 沒有 Clipboard API）"""
+    """用另一個沒有被修改的頁面讀剪貼簿（file:// 是安全環境，about:blank 沒有 Clipboard API）
+
+    Windows 的剪貼簿把換行存成 CRLF（作業系統的慣例，程式本身放進剪貼簿的是 LF），
+    所以比對前統一成 LF。只換 CRLF，單獨出現的 CR 會留著讓測試失敗。
+    """
     reader = context.new_page()
     reader.goto(html.as_uri())
     try:
-        return reader.evaluate('navigator.clipboard.readText()')
+        text = reader.evaluate('navigator.clipboard.readText()')
     finally:
         reader.close()
+    return text.replace('\r\n', '\n')
 
 
 def test_clipboard_api_copies_exact_code(context, deck):
